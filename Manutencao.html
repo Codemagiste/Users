@@ -198,6 +198,26 @@ function voltar() {
     window.location.href = "index.html";
 }
 </script>
+    <h2>Registro de Manutenção</h2>
+
+<input type="text" id="nome" placeholder="Nome"><br><br>
+<input type="text" id="problema" placeholder="Problema"><br><br>
+
+<button onclick="enviar()">Enviar</button>
+
+<script>
+function enviar() {
+
+fetch("https://script.google.com/macros/s/AKfycbw0dE-KLV84a0xphF3HozayKdKLEcO0SyVkEqLoLZrQdOYz4NgNdLDCYQHJH5hpNt1W/exec", {
+    method: "POST",
+    body: new URLSearchParams({
+        nome: document.getElementById("nome").value,
+        problema: document.getElementById("problema").value
+    })
+})
+.then(res => alert("Dados enviados com sucesso!"))
+.catch(err => alert("Erro ao enviar"));
+}
+</script>
 </body>
 </html>
-
