@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema de Manutenção</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
+
+body{background:#eef2f7;padding:30px;}
+
+.header{
+background:#1e293b;
+color:white;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.08);
+margin-bottom:20px;
+}
+
+.form-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+}
+
+input,select,textarea{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+background:#2563eb;
+color:white;
+border:none;
+padding:14px;
+border-radius:10px;
+cursor:pointer;
+margin-top:20px;
+}
+
+button:hover{background:#1d4ed8;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th{
+background:#1e293b;
+color:white;
+padding:12px;
+}
+
+td{padding:12px;border-bottom:1px solid #eee;}
+
+.print-btn{
+background:#16a34a;
+margin-left:10px;
+}
+
+.print-btn:hover{background:#15803d;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>📦 Sistema de Entrada de Equipamentos</h1>
+</div>
+
+<div class="card">
+
+<form id="formEquipamento">
+
+<div class="form-grid">
+
+<input type="text" id="loja" placeholder="Loja de Entrada" required>
+<input type="text" id="setor" placeholder="Setor de Recebimento" required>
+<input type="text" id="ticket" placeholder="Ticket Milvus" required>
+<input type="text" id="tecnico" placeholder="Técnico Responsável" required>
+<input type="text" id="cliente" placeholder="Nome do Cliente" required>
+<input type="text" id="equipamento" placeholder="Equipamento" required>
+<input type="text" id="modelo" placeholder="Marca / Modelo">
+<input type="text" id="serie" placeholder="Número de Série">
+
+</div>
+
+<textarea id="defeito" placeholder="Defeito informado" style="margin-top:15px"></textarea>
+
+<button type="submit">Registrar e Gerar OS</button>
+
+</form>
+
+</div>
+
+<div class="card">
+<h2>Ordens de Serviço</h2>
+
+<table id="tabela">
+<thead>
+<tr>
+<th>OS</th>
+<th>Data</th>
+<th>Cliente</th>
+<th>Equipamento</th>
+<th>Técnico</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</div>
+
+<script>
+let contadorOS = 1000;
+
+document.getElementById("formEquipamento").addEventListener("submit", function(e){
+e.preventDefault();
+
+contadorOS++;
+
+const dados={
+os:contadorOS,
+data:new Date().toLocaleString(),
+loja:loja.value,
+setor:setor.value,
+ticket:ticket.value,
+tecnico:tecnico.value,
+cliente:cliente.value,
+equipamento:equipamento.value,
+modelo:modelo.value,
+serie:serie.value,
+defeito:defeito.value
+};
+
+adicionarTabela(dados);
+gerarComprovante(dados);
+
+this.reset();
+});
+
+function adicionarTabela(d){
+const tabela=document.querySelector("#tabela tbody");
+const linha=tabela.insertRow();
+
+linha.insertCell().textContent=d.os;
+linha.insertCell().textContent=d.data;
+linha.insertCell().textContent=d.cliente;
+linha.insertCell().textContent=d.equipamento;
+linha.insertCell().textContent=d.tecnico;
+
+const btn=linha.insertCell();
+btn.innerHTML=`<button class="print-btn" onclick='gerarComprovante(${JSON.stringify(d)})'>Imprimir OS</button>`;
+}
+
+function gerarComprovante(d){
+
+const janela=window.open("","","width=400,height=600");
+
+janela.document.write(`
+<h2>ORDEM DE SERVIÇO #${d.os}</h2>
+<hr>
+<p><b>Data:</b> ${d.data}</p>
+<p><b>Cliente:</b> ${d.cliente}</p>
+<p><b>Equipamento:</b> ${d.equipamento}</p>
+<p><b>Modelo:</b> ${d.modelo}</p>
+<p><b>Série:</b> ${d.serie}</p>
+<p><b>Defeito:</b> ${d.defeito}</p>
+<p><b>Loja:</b> ${d.loja}</p>
+<p><b>Setor:</b> ${d.setor}</p>
+<p><b>Ticket Milvus:</b> ${d.ticket}</p>
+<p><b>Técnico:</b> ${d.tecnico}</p>
+
+<br><br>
+________________________<br>
+Assinatura Cliente
+`);
+
+janela.print();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel TI</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container principal */
+.container {
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0,255,255,0.2);
+}
+
+/* Título */
+h1 {
+    margin-bottom: 40px;
+    color: #38bdf8;
+}
+
+/* Botões */
+button {
+    padding: 15px 40px;
+    margin: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Botão Controle */
+.controle {
+    background: #22c55e;
+    color: white;
+}
+
+.controle:hover {
+    background: #16a34a;
+    transform: scale(1.05);
+}
+
+/* Botão Manutenção */
+.manutencao {
+    background: #f59e0b;
+    color: white;
+}
+
+.manutencao:hover {
+    background: #d97706;
+    transform: scale(1.05);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Painel de TI</h1>
+
+    <button class="controle" onclick="controle()">
+        Controle
+    </button>
+
+    <button class="manutencao" onclick="manutencao()">
+        Manutenção
+    </button>
+</div>
+
+<script>
+function controle() {
+    alert("Área de Controle selecionada");
+}
+
+function manutencao() {
+    alert("Área de Manutenção selecionada");
+}
+</script>
+
+</body>
+</html>

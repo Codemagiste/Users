@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle Inteligente de Máquinas</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f4f6f9;
+    margin:20px;
+}
+h1{
+    text-align:center;
+}
+.container{
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+input, select{
+    padding:8px;
+    margin:5px;
+}
+button{
+    padding:6px 10px;
+    margin:3px;
+    cursor:pointer;
+    background:#343a40;
+    color:white;
+    border:none;
+    border-radius:4px;
+}
+.btn-danger{
+    background:#c82333;
+}
+.btn-edit{
+    background:#007bff;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+th, td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+th{
+    background:#343a40;
+    color:white;
+}
+.dashboard{
+    margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Controle Inteligente de Máquinas</h1>
+
+<div class="container">
+
+<input type="text" id="ip" placeholder="IP">
+<input type="text" id="nome" placeholder="Nome da Máquina">
+<input type="text" id="setor" placeholder="Setor">
+<input type="text" id="responsavel" placeholder="Nome Responsável">
+<input type="text" id="ticket" placeholder="Ticket Milvus">
+
+<select id="status">
+    <option>Ativo</option>
+    <option>Manutenção</option>
+    <option>Inativo</option>
+    <option>Transferência</option>
+</select>
+
+<input type="text" id="lojaOrigem" placeholder="Loja de Origem">
+<input type="text" id="lojaDestino" placeholder="Loja de Destino">
+
+<button onclick="adicionarOuAtualizar()">Salvar</button>
+<button onclick="exportarCSV()">Exportar CSV</button>
+<button onclick="exportarPDF()">Exportar PDF</button>
+
+<br><br>
+
+<input type="text" id="busca" placeholder="Buscar..." onkeyup="atualizarTabela()">
+
+<table>
+<thead>
+<tr>
+<th>IP</th>
+<th>Máquina</th>
+<th>Setor</th>
+<th>Responsável</th>
+<th>Ticket</th>
+<th>Status</th>
+<th>Origem</th>
+<th>Destino</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+<div class="dashboard">
+<canvas id="grafico"></canvas>
+</div>
+
+</div>
+
+<script>
+
+let registros = JSON.parse(localStorage.getItem("registros")) || [];
+let editandoIP = null;
+
+function salvarDados(){
+    localStorage.setItem("registros", JSON.stringify(registros));
+}
+
+function limparCampos(){
+    document.querySelectorAll("input").forEach(i => i.value="");
+    editandoIP = null;
+}
+
+function adicionarOuAtualizar(){
+
+    const ip = document.getElementById("ip").value.trim();
+
+    if(ip === ""){
+        alert("Informe o IP.");
+        return;
+    }
+
+    const registroExistente = registros.find(r => r.ip === ip);
+
+    if(editandoIP === null && registroExistente){
+        alert("Este IP já está cadastrado.");
+        return;
+    }
+
+    const dados = {
+        ip: ip,
+        nome: document.getElementById("nome").value,
+        setor: document.getElementById("setor").value,
+        responsavel: document.getElementById("responsavel").value,
+        ticket: document.getElementById("ticket").value,
+        status: document.getElementById("status").value,
+        lojaOrigem: document.getElementById("lojaOrigem").value,
+        lojaDestino: document.getElementById("lojaDestino").value
+    };
+
+    if(editandoIP){
+        const index = registros.findIndex(r => r.ip === editandoIP);
+        registros[index] = dados;
+    } else {
+        registros.push(dados);
+    }
+
+    salvarDados();
+    limparCampos();
+    atualizarTabela();
+    atualizarDashboard();
+}
+
+function editarRegistro(ip){
+
+    const registro = registros.find(r => r.ip === ip);
+    if(!registro) return;
+
+    document.getElementById("ip").value = registro.ip;
+    document.getElementById("nome").value = registro.nome;
+    document.getElementById("setor").value = registro.setor;
+    document.getElementById("responsavel").value = registro.responsavel;
+    document.getElementById("ticket").value = registro.ticket;
+    document.getElementById("status").value = registro.status;
+    document.getElementById("lojaOrigem").value = registro.lojaOrigem;
+    document.getElementById("lojaDestino").value = registro.lojaDestino;
+
+    editandoIP = ip;
+}
+
+function excluirRegistro(ip){
+
+    if(!confirm("Deseja realmente excluir este registro?")) return;
+
+    registros = registros.filter(r => r.ip !== ip);
+
+    salvarDados();
+    atualizarTabela();
+    atualizarDashboard();
+}
+
+function atualizarTabela(){
+
+    const busca = document.getElementById("busca").value.toLowerCase();
+    const tabela = document.getElementById("tabela");
+    tabela.innerHTML = "";
+
+    registros
+    .sort((a,b)=> String(a.ip).localeCompare(String(b.ip), undefined, {numeric:true}))
+    .filter(r => Object.values(r).join(" ").toLowerCase().includes(busca))
+    .forEach(r => {
+
+        tabela.innerHTML += `
+        <tr>
+            <td>${r.ip}</td>
+            <td>${r.nome}</td>
+            <td>${r.setor}</td>
+            <td>${r.responsavel}</td>
+            <td>${r.ticket}</td>
+            <td>${r.status}</td>
+            <td>${r.lojaOrigem}</td>
+            <td>${r.lojaDestino}</td>
+            <td>
+                <button class="btn-edit" onclick="editarRegistro('${r.ip}')">Editar</button>
+                <button class="btn-danger" onclick="excluirRegistro('${r.ip}')">Excluir</button>
+            </td>
+        </tr>
+        `;
+    });
+}
+
+function atualizarDashboard(){
+
+    const setores = {};
+    registros.forEach(r=>{
+        if(r.setor){
+            setores[r.setor] = (setores[r.setor] || 0) + 1;
+        }
+    });
+
+    const ctx = document.getElementById("grafico");
+
+    if(window.grafico) window.grafico.destroy();
+
+    window.grafico = new Chart(ctx,{
+        type:"bar",
+        data:{
+            labels:Object.keys(setores),
+            datasets:[{
+                label:"Quantidade por Setor",
+                data:Object.values(setores)
+            }]
+        },
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{ display:false }
+            }
+        }
+    });
+}
+
+function exportarCSV(){
+    let csv = "IP,Maquina,Setor,Responsavel,Ticket,Status,Origem,Destino\n";
+    registros.forEach(r=>{
+        csv += `${r.ip},${r.nome},${r.setor},${r.responsavel},${r.ticket},${r.status},${r.lojaOrigem},${r.lojaDestino}\n`;
+    });
+
+    const blob = new Blob([csv], {type:"text/csv"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "relatorio_maquinas.csv";
+    link.click();
+}
+
+function exportarPDF(){
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("l","mm","a4");
+
+    doc.setFontSize(16);
+    doc.text("Relatório de Controle de Máquinas",14,15);
+    doc.setFontSize(10);
+    doc.text("Gerado em: " + new Date().toLocaleString(),14,22);
+
+    const colunas = ["IP","Máquina","Setor","Responsável","Ticket","Status","Origem","Destino"];
+
+    const linhas = registros.map(r=>[
+        r.ip,r.nome,r.setor,r.responsavel,r.ticket,r.status,r.lojaOrigem,r.lojaDestino
+    ]);
+
+    doc.autoTable({
+        head:[colunas],
+        body:linhas,
+        startY:28,
+        styles:{fontSize:8}
+    });
+
+    doc.save("relatorio_maquinas.pdf");
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    atualizarTabela();
+    atualizarDashboard();
+});
+
+</script>
+
+</body>
+</html>
