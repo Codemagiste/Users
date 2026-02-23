@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Equipamentos PRO</title>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{font-family:Arial;background:#f4f6f9;padding:30px;}
+
+.container{
+background:white;padding:25px;border-radius:12px;
+box-shadow:0 0 15px rgba(0,0,0,0.1);
+max-width:1000px;margin:auto;
+}
+
+h2{text-align:center}
+
+input,select,button,textarea{
+padding:10px;margin:5px;border-radius:6px;border:1px solid #ccc;
+}
+
+textarea{width:300px;height:60px;display:none}
+
+button{
+background:#007bff;color:white;border:none;cursor:pointer;
+}
+button:hover{background:#0056b3}
+
+table{width:100%;margin-top:20px;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:center}
+
+.apto{color:green;font-weight:bold}
+.condenado{color:red;font-weight:bold}
+.manutencao{color:orange;font-weight:bold}
+.teste{color:purple;font-weight:bold}
+.reserva{color:#555;font-weight:bold}
+.defeito{color:#b00020;font-weight:bold}
+
+.top-buttons{text-align:center;margin-top:15px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Controle de Equipamentos PRO</h2>
+
+<input type="text" id="equipamento" placeholder="Nome do Equipamento">
+<input type="text" id="modelo" placeholder="Modelo">
+
+<select id="status" onchange="verificarDefeito()">
+<option>Apto a Uso</option>
+<option>Condenado</option>
+<option>Manutenção</option>
+<option>Em Teste</option>
+<option>Reserva</option>
+<option>Com Defeito</option>
+</select>
+
+<br>
+
+<textarea id="descricaoDefeito" placeholder="Descreva o defeito..."></textarea>
+
+<br>
+
+<button onclick="salvar()">Salvar</button>
+
+<div class="top-buttons">
+<button onclick="exportarPDF()">Exportar PDF</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Equipamento</th>
+<th>Modelo</th>
+<th>Status</th>
+<th>Defeito</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let equipamentos=[];
+let editandoIndex=null;
+
+//////////////// MOSTRAR CAMPO DE DEFEITO ////////////////
+
+function verificarDefeito(){
+const status=document.getElementById("status").value;
+const campo=document.getElementById("descricaoDefeito");
+
+campo.style.display = status==="Com Defeito" ? "block" : "none";
+
+if(status!=="Com Defeito") campo.value="";
+}
+
+//////////////// SALVAR / ATUALIZAR //////////////////////
+
+function salvar(){
+const nome=equipamento.value;
+const modelo=document.getElementById("modelo").value;
+const status=document.getElementById("status").value;
+const defeito=document.getElementById("descricaoDefeito").value;
+
+if(!nome||!modelo){
+alert("Preencha todos os campos");
+return;
+}
+
+if(status==="Com Defeito" && !defeito){
+alert("Descreva o defeito");
+return;
+}
+
+const registro={nome,modelo,status,defeito};
+
+if(editandoIndex===null){
+equipamentos.push(registro);
+}else{
+equipamentos[editandoIndex]=registro;
+editandoIndex=null;
+}
+
+limparFormulario();
+renderizar();
+}
+
+//////////////// EDITAR //////////////////////
+
+function editar(i){
+const eq=equipamentos[i];
+
+equipamento.value=eq.nome;
+modelo.value=eq.modelo;
+status.value=eq.status;
+descricaoDefeito.value=eq.defeito||"";
+
+verificarDefeito();
+editandoIndex=i;
+}
+
+//////////////// LIMPAR FORM //////////////////////
+
+function limparFormulario(){
+equipamento.value="";
+modelo.value="";
+status.selectedIndex=0;
+descricaoDefeito.value="";
+descricaoDefeito.style.display="none";
+}
+
+//////////////// STATUS COR //////////////////////
+
+function classeStatus(status){
+if(status==="Condenado") return "condenado";
+if(status==="Manutenção") return "manutencao";
+if(status==="Em Teste") return "teste";
+if(status==="Reserva") return "reserva";
+if(status==="Com Defeito") return "defeito";
+return "apto";
+}
+
+//////////////// TROCAR STATUS RAPIDO ////////////////////
+
+function trocarStatus(i){
+const opcoes=["Apto a Uso","Condenado","Manutenção","Em Teste","Reserva","Com Defeito"];
+let atual=opcoes.indexOf(equipamentos[i].status);
+equipamentos[i].status=opcoes[(atual+1)%opcoes.length];
+renderizar();
+}
+
+//////////////// REMOVER //////////////////////
+
+function remover(i){
+equipamentos.splice(i,1);
+renderizar();
+}
+
+//////////////// RENDER //////////////////////
+
+function renderizar(){
+const tabela=document.getElementById("tabela");
+tabela.innerHTML="";
+
+equipamentos.forEach((eq,i)=>{
+tabela.innerHTML+=`
+<tr>
+<td>${eq.nome}</td>
+<td>${eq.modelo}</td>
+<td class="${classeStatus(eq.status)}">${eq.status}</td>
+<td>${eq.defeito||"-"}</td>
+<td>
+<button onclick="editar(${i})">Editar</button>
+<button onclick="trocarStatus(${i})">Status</button>
+<button onclick="imprimirEtiqueta(${i})">Etiqueta</button>
+<button onclick="remover(${i})">Excluir</button>
+</td>
+</tr>`;
+});
+}
+
+//////////////// PDF EM TABELA //////////////////////
+
+function exportarPDF(){
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+doc.setFontSize(16);
+doc.text("Controle de Equipamentos", 14, 15);
+
+const dados = equipamentos.map(eq => [
+eq.nome,
+eq.modelo,
+eq.status,
+eq.defeito || "-"
+]);
+
+doc.autoTable({
+startY: 25,
+head: [["Equipamento","Modelo","Status","Defeito"]],
+body: dados,
+theme:"grid",
+styles:{fontSize:10},
+headStyles:{fillColor:[0,123,255]}
+});
+
+doc.save("equipamentos.pdf");
+}
+
+//////////////// EXCEL //////////////////////
+
+function exportarExcel(){
+let tabela="Equipamento\tModelo\tStatus\tDefeito\n";
+
+equipamentos.forEach(eq=>{
+tabela+=`${eq.nome}\t${eq.modelo}\t${eq.status}\t${eq.defeito||""}\n`;
+});
+
+const blob=new Blob([tabela],{type:"application/vnd.ms-excel"});
+const link=document.createElement("a");
+
+link.href=URL.createObjectURL(blob);
+link.download="equipamentos.xls";
+link.click();
+}
+
+//////////////// ETIQUETA //////////////////////
+
+function imprimirEtiqueta(i){
+const eq=equipamentos[i];
+
+const janela=window.open("","","width=400,height=300");
+
+janela.document.write(`
+<h2>Etiqueta de Equipamento</h2>
+<hr>
+<p><b>Equipamento:</b> ${eq.nome}</p>
+<p><b>Modelo:</b> ${eq.modelo}</p>
+<p><b>Status:</b> ${eq.status}</p>
+${eq.defeito ? `<p><b>Defeito:</b> ${eq.defeito}</p>`:""}
+
+<script>
+window.print();
+<\/script>
+`);
+
+janela.document.close();
+}
+
+</script>
+
+</body>
+</html>
