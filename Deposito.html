@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Controle de Equipamentos PRO</title>
+<title>Controle de Equipamentos</title>
 
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -48,7 +48,7 @@ th,td{padding:12px;border-bottom:1px solid #ddd;text-align:center}
 
 <div class="container">
 
-<h2>Controle de Equipamentos PRO</h2>
+<h2>Controle de Equipamentos</h2>
 
 <input type="text" id="equipamento" placeholder="Nome do Equipamento">
 <input type="text" id="modelo" placeholder="Modelo">
@@ -95,7 +95,7 @@ th,td{padding:12px;border-bottom:1px solid #ddd;text-align:center}
 let equipamentos=[];
 let editandoIndex=null;
 
-//////////////// MOSTRAR CAMPO DE DEFEITO ////////////////
+// MOSTRAR CAMPO DE DEFEITO //
 
 function verificarDefeito(){
 const status=document.getElementById("status").value;
@@ -106,7 +106,7 @@ campo.style.display = status==="Com Defeito" ? "block" : "none";
 if(status!=="Com Defeito") campo.value="";
 }
 
-//////////////// SALVAR / ATUALIZAR //////////////////////
+// SALVAR / ATUALIZAR //
 
 function salvar(){
 const nome=equipamento.value;
@@ -137,8 +137,6 @@ limparFormulario();
 renderizar();
 }
 
-//////////////// EDITAR //////////////////////
-
 function editar(i){
 const eq=equipamentos[i];
 
@@ -151,8 +149,7 @@ verificarDefeito();
 editandoIndex=i;
 }
 
-//////////////// LIMPAR FORM //////////////////////
-
+// LIMPAR //
 function limparFormulario(){
 equipamento.value="";
 modelo.value="";
@@ -161,7 +158,7 @@ descricaoDefeito.value="";
 descricaoDefeito.style.display="none";
 }
 
-//////////////// STATUS COR //////////////////////
+//COR //
 
 function classeStatus(status){
 if(status==="Condenado") return "condenado";
@@ -172,8 +169,7 @@ if(status==="Com Defeito") return "defeito";
 return "apto";
 }
 
-//////////////// TROCAR STATUS RAPIDO ////////////////////
-
+//STATUS RAPIDO //
 function trocarStatus(i){
 const opcoes=["Apto a Uso","Condenado","Manutenção","Em Teste","Reserva","Com Defeito"];
 let atual=opcoes.indexOf(equipamentos[i].status);
@@ -181,14 +177,11 @@ equipamentos[i].status=opcoes[(atual+1)%opcoes.length];
 renderizar();
 }
 
-//////////////// REMOVER //////////////////////
 
 function remover(i){
 equipamentos.splice(i,1);
 renderizar();
 }
-
-//////////////// RENDER //////////////////////
 
 function renderizar(){
 const tabela=document.getElementById("tabela");
@@ -211,7 +204,7 @@ tabela.innerHTML+=`
 });
 }
 
-//////////////// PDF EM TABELA //////////////////////
+// PDF EM TABELA //
 
 function exportarPDF(){
 const { jsPDF } = window.jspdf;
@@ -239,7 +232,7 @@ headStyles:{fillColor:[0,123,255]}
 doc.save("equipamentos.pdf");
 }
 
-//////////////// EXCEL //////////////////////
+// EXCEL SEM FORMATO//
 
 function exportarExcel(){
 let tabela="Equipamento\tModelo\tStatus\tDefeito\n";
@@ -256,8 +249,7 @@ link.download="equipamentos.xls";
 link.click();
 }
 
-//////////////// ETIQUETA //////////////////////
-
+// MODELO ETIQUETA //
 function imprimirEtiqueta(i){
 const eq=equipamentos[i];
 
@@ -291,3 +283,4 @@ function voltar() {
 </body>
 
 </html>
+
