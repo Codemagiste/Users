@@ -7,48 +7,62 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
 
-body{background:#eef2f7;padding:30px;}
+body{
+background:linear-gradient(135deg,#0f172a,#1e293b);
+padding:30px;
+color:#1e293b;
+}
 
 .header{
-background:#1e293b;
+background:#0f172a;
 color:white;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+padding:25px;
+border-radius:12px;
+margin-bottom:25px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 
 .card{
 background:white;
 padding:25px;
-border-radius:12px;
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
-margin-bottom:20px;
+border-radius:15px;
+box-shadow:0 8px 30px rgba(0,0,0,0.08);
+margin-bottom:25px;
 }
 
 .form-grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
+gap:15px;
 }
 
 input,select,textarea{
 width:100%;
-padding:10px;
+padding:12px;
 border-radius:8px;
-border:1px solid #ccc;
+border:1px solid #d1d5db;
+font-size:14px;
 }
+
+textarea{margin-top:15px;}
 
 button{
 background:#2563eb;
 color:white;
 border:none;
-padding:14px;
+padding:12px 18px;
 border-radius:10px;
 cursor:pointer;
-margin-top:20px;
+margin-top:15px;
+font-weight:bold;
+transition:0.2s;
 }
 
-button:hover{background:#1d4ed8;}
+button:hover{transform:scale(1.05);}
+
+.btn-green{background:#16a34a;}
+.btn-red{background:#dc2626;}
+.btn-gray{background:#475569;}
 
 table{
 width:100%;
@@ -57,19 +71,37 @@ margin-top:20px;
 }
 
 th{
-background:#1e293b;
+background:#0f172a;
 color:white;
+padding:14px;
+text-align:left;
+}
+
+td{
 padding:12px;
+border-bottom:1px solid #eee;
+font-size:14px;
 }
 
-td{padding:12px;border-bottom:1px solid #eee;}
-
-.print-btn{
-background:#16a34a;
-margin-left:10px;
+.actions button{
+margin-right:5px;
+padding:8px 12px;
+font-size:12px;
 }
 
-.print-btn:hover{background:#15803d;}
+.status{
+padding:6px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:bold;
+color:white;
+text-align:center;
+}
+
+.em-andamento{background:#f59e0b;}
+.finalizada{background:#2563eb;}
+.entregue{background:#16a34a;}
+
 </style>
 </head>
 
@@ -94,11 +126,18 @@ margin-left:10px;
 <input type="text" id="modelo" placeholder="Marca / Modelo">
 <input type="text" id="serie" placeholder="Número de Série">
 
+<select id="status" required>
+<option value="">Status da OS</option>
+<option value="Em andamento">Em andamento</option>
+<option value="Finalizada">Finalizada</option>
+<option value="Entregue">Entregue</option>
+</select>
+
 </div>
 
-<textarea id="defeito" placeholder="Defeito informado" style="margin-top:15px"></textarea>
+<textarea id="defeito" placeholder="Defeito informado"></textarea>
 
-<button type="submit">Registrar e Gerar OS</button>
+<button type="submit">📄 Registrar e Gerar OS</button>
 
 </form>
 
@@ -115,6 +154,7 @@ margin-left:10px;
 <th>Cliente</th>
 <th>Equipamento</th>
 <th>Técnico</th>
+<th>Status</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -123,16 +163,29 @@ margin-left:10px;
 
 </div>
 
+<button class="btn-gray" onclick="voltar()">⬅ Voltar ao Início</button>
+
 <script>
-let contadorOS = 1000;
+
+let listaOS = JSON.parse(localStorage.getItem("ordens")) || [];
+let contadorOS = parseInt(localStorage.getItem("contadorOS")) || 0;
+
+function salvarStorage(){
+localStorage.setItem("ordens", JSON.stringify(listaOS));
+localStorage.setItem("contadorOS", contadorOS.toString());
+}
+
+function gerarNumeroOS(){
+contadorOS++;
+salvarStorage();
+return new Date().getFullYear() + "-" + String(contadorOS).padStart(4,"0");
+}
 
 document.getElementById("formEquipamento").addEventListener("submit", function(e){
 e.preventDefault();
 
-contadorOS++;
-
 const dados={
-os:contadorOS,
+os:gerarNumeroOS(),
 data:new Date().toLocaleString(),
 loja:loja.value,
 setor:setor.value,
@@ -142,18 +195,23 @@ cliente:cliente.value,
 equipamento:equipamento.value,
 modelo:modelo.value,
 serie:serie.value,
-defeito:defeito.value
+defeito:defeito.value,
+status:status.value
 };
 
-adicionarTabela(dados);
+listaOS.push(dados);
+salvarStorage();
+renderTabela();
 gerarComprovante(dados);
-
 this.reset();
 });
 
-function adicionarTabela(d){
-const tabela=document.querySelector("#tabela tbody");
-const linha=tabela.insertRow();
+function renderTabela(){
+const tbody=document.querySelector("#tabela tbody");
+tbody.innerHTML="";
+
+listaOS.forEach((d,index)=>{
+const linha=tbody.insertRow();
 
 linha.insertCell().textContent=d.os;
 linha.insertCell().textContent=d.data;
@@ -161,44 +219,90 @@ linha.insertCell().textContent=d.cliente;
 linha.insertCell().textContent=d.equipamento;
 linha.insertCell().textContent=d.tecnico;
 
-const btn=linha.insertCell();
-btn.innerHTML=`<button class="print-btn" onclick='gerarComprovante(${JSON.stringify(d)})'>Imprimir OS</button>`;
+let classeStatus="";
+if(d.status==="Em andamento") classeStatus="em-andamento";
+if(d.status==="Finalizada") classeStatus="finalizada";
+if(d.status==="Entregue") classeStatus="entregue";
+
+linha.insertCell().innerHTML=
+`<span class="status ${classeStatus}">${d.status}</span>`;
+
+const acao=linha.insertCell();
+acao.classList.add("actions");
+acao.innerHTML=`
+<button class="btn-green" onclick='gerarComprovante(${JSON.stringify(d)})'>🖨</button>
+<button class="btn-gray" onclick="alterarStatus(${index})">🔄</button>
+<button class="btn-red" onclick="excluirOS(${index})">🗑</button>
+`;
+});
+}
+
+function alterarStatus(index){
+
+let novoStatus = prompt(
+"Digite o número do novo status:\n1 - Em andamento\n2 - Finalizada\n3 - Entregue"
+);
+
+if(novoStatus==="1") listaOS[index].status="Em andamento";
+if(novoStatus==="2") listaOS[index].status="Finalizada";
+if(novoStatus==="3") listaOS[index].status="Entregue";
+
+salvarStorage();
+renderTabela();
+}
+
+function excluirOS(index){
+if(confirm("Deseja realmente excluir esta OS?")){
+listaOS.splice(index,1);
+salvarStorage();
+renderTabela();
+}
 }
 
 function gerarComprovante(d){
-
-const janela=window.open("","","width=400,height=600");
+const janela=window.open("","","width=500,height=700");
 
 janela.document.write(`
-<h2>ORDEM DE SERVIÇO #${d.os}</h2>
+<style>
+body{font-family:Arial;padding:20px;}
+h2{text-align:center;}
+hr{margin:10px 0;}
+p{font-size:14px;margin:5px 0;}
+.status{font-weight:bold;}
+</style>
+
+<h2>ORDEM DE SERVIÇO</h2>
 <hr>
+<p><b>Nº:</b> ${d.os}</p>
 <p><b>Data:</b> ${d.data}</p>
+<p><b>Status:</b> ${d.status}</p>
+<hr>
 <p><b>Cliente:</b> ${d.cliente}</p>
 <p><b>Equipamento:</b> ${d.equipamento}</p>
 <p><b>Modelo:</b> ${d.modelo}</p>
 <p><b>Série:</b> ${d.serie}</p>
 <p><b>Defeito:</b> ${d.defeito}</p>
+<hr>
 <p><b>Loja:</b> ${d.loja}</p>
 <p><b>Setor:</b> ${d.setor}</p>
 <p><b>Ticket Milvus:</b> ${d.ticket}</p>
 <p><b>Técnico:</b> ${d.tecnico}</p>
 
-<br><br>
-________________________<br>
-Assinatura Cliente
+<br><br><br>
+_____________________________<br>
+Assinatura do Cliente
 `);
 
 janela.print();
 }
-</script>
-<button onclick="voltar()">⬅ Voltar ao Início</button>
 
-<script>
-function voltar() {
-    window.location.href = "index.html";
+function voltar(){
+window.location.href="index.html";
 }
+
+renderTabela();
+
 </script>
+
 </body>
 </html>
-
-
