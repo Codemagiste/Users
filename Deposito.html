@@ -9,6 +9,371 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    padding:30px;
+}
+
+.container{
+    background:white;
+    padding:25px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    max-width:1100px;
+    margin:auto;
+}
+
+h2{text-align:center;color:#0f172a;}
+
+input,select,textarea{
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+textarea{
+    width:300px;
+    height:60px;
+    display:none;
+}
+
+button{
+    padding:8px 14px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+    color:white;
+}
+
+.btn-primary{background:#2563eb;}
+.btn-success{background:#16a34a;}
+.btn-warning{background:#f59e0b;}
+.btn-danger{background:#dc2626;}
+.btn-secondary{background:#64748b;}
+
+button:hover{opacity:0.8;}
+
+.dashboard{
+    display:flex;
+    gap:15px;
+    margin:20px 0;
+    flex-wrap:wrap;
+}
+
+.card{
+    flex:1;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+    color:white;
+    font-weight:bold;
+}
+
+.card-total{background:#0ea5e9;}
+.card-apto{background:#16a34a;}
+.card-defeito{background:#dc2626;}
+
+table{
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+}
+
+th{
+    background:#0f172a;
+    color:white;
+    padding:12px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+
+tr:hover{background:#f1f5f9;}
+
+.apto{color:green;font-weight:bold}
+.condenado{color:red;font-weight:bold}
+.manutencao{color:orange;font-weight:bold}
+.teste{color:purple;font-weight:bold}
+.reserva{color:#555;font-weight:bold}
+.defeito{color:#b00020;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Controle de Equipamentos</h2>
+
+<input type="text" id="equipamento" placeholder="Nome do Equipamento">
+<input type="text" id="modelo" placeholder="Modelo">
+
+<select id="status" onchange="verificarDefeito()">
+<option>Apto a Uso</option>
+<option>Condenado</option>
+<option>Manutenção</option>
+<option>Em Teste</option>
+<option>Reserva</option>
+<option>Com Defeito</option>
+</select>
+
+<br>
+<textarea id="descricaoDefeito" placeholder="Descreva o defeito..."></textarea>
+<br>
+
+<button class="btn-success" onclick="salvar()">Salvar</button>
+
+<button class="btn-primary" onclick="exportarPDF()">Exportar PDF</button>
+<button class="btn-secondary" onclick="exportarExcel()">Exportar Excel</button>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+    <div class="card card-total">
+        Total Estoque
+        <div id="totalEstoque">0</div>
+    </div>
+    <div class="card card-apto">
+        Aptos
+        <div id="totalAptos">0</div>
+    </div>
+    <div class="card card-defeito">
+        Com Defeito
+        <div id="totalDefeito">0</div>
+    </div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Equipamento</th>
+<th>Modelo</th>
+<th>Status</th>
+<th>Defeito</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let equipamentos=[];
+let editandoIndex=null;
+
+function salvarLocal(){
+    localStorage.setItem("equipamentos", JSON.stringify(equipamentos));
+}
+
+function carregarLocal(){
+    const dados=localStorage.getItem("equipamentos");
+    if(dados){
+        equipamentos=JSON.parse(dados);
+        renderizar();
+    }
+}
+
+/* ===== MOSTRAR CAMPO DE DEFEITO ===== */
+
+function verificarDefeito(){
+    const status=document.getElementById("status").value;
+    const campo=document.getElementById("descricaoDefeito");
+
+    campo.style.display=status==="Com Defeito"?"block":"none";
+    if(status!=="Com Defeito") campo.value="";
+}
+
+/* ===== SALVAR ===== */
+
+function salvar(){
+    const nome=document.getElementById("equipamento").value;
+    const modelo=document.getElementById("modelo").value;
+    const status=document.getElementById("status").value;
+    const defeito=document.getElementById("descricaoDefeito").value;
+
+    if(!nome||!modelo){
+        alert("Preencha todos os campos");
+        return;
+    }
+
+    if(status==="Com Defeito" && !defeito){
+        alert("Descreva o defeito");
+        return;
+    }
+
+    const registro={nome,modelo,status,defeito};
+
+    if(editandoIndex===null){
+        equipamentos.push(registro);
+    }else{
+        equipamentos[editandoIndex]=registro;
+        editandoIndex=null;
+    }
+
+    limparFormulario();
+    renderizar();
+}
+
+/* ===== EDITAR ===== */
+
+function editar(i){
+    const eq=equipamentos[i];
+
+    document.getElementById("equipamento").value=eq.nome;
+    document.getElementById("modelo").value=eq.modelo;
+    document.getElementById("status").value=eq.status;
+    document.getElementById("descricaoDefeito").value=eq.defeito||"";
+
+    verificarDefeito();
+    editandoIndex=i;
+}
+
+/* ===== LIMPAR ===== */
+
+function limparFormulario(){
+    document.getElementById("equipamento").value="";
+    document.getElementById("modelo").value="";
+    document.getElementById("status").selectedIndex=0;
+    document.getElementById("descricaoDefeito").value="";
+    document.getElementById("descricaoDefeito").style.display="none";
+}
+
+/* ===== STATUS ===== */
+
+function classeStatus(status){
+    if(status==="Condenado") return "condenado";
+    if(status==="Manutenção") return "manutencao";
+    if(status==="Em Teste") return "teste";
+    if(status==="Reserva") return "reserva";
+    if(status==="Com Defeito") return "defeito";
+    return "apto";
+}
+
+function trocarStatus(i){
+    const opcoes=["Apto a Uso","Condenado","Manutenção","Em Teste","Reserva","Com Defeito"];
+    let atual=opcoes.indexOf(equipamentos[i].status);
+    equipamentos[i].status=opcoes[(atual+1)%opcoes.length];
+    renderizar();
+}
+
+function remover(i){
+    equipamentos.splice(i,1);
+    renderizar();
+}
+
+/* ===== RENDERIZAR ===== */
+
+function renderizar(){
+    const tabela=document.getElementById("tabela");
+    tabela.innerHTML="";
+
+    equipamentos.forEach((eq,i)=>{
+        tabela.innerHTML+=`
+        <tr>
+        <td>${eq.nome}</td>
+        <td>${eq.modelo}</td>
+        <td class="${classeStatus(eq.status)}">${eq.status}</td>
+        <td>${eq.defeito||"-"}</td>
+        <td>
+        <button class="btn-primary" onclick="editar(${i})">Editar</button>
+        <button class="btn-warning" onclick="trocarStatus(${i})">Status</button>
+        <button class="btn-secondary" onclick="imprimirEtiqueta(${i})">Etiqueta</button>
+        <button class="btn-danger" onclick="remover(${i})">Excluir</button>
+        </td>
+        </tr>`;
+    });
+
+    atualizarDashboard();
+    salvarLocal();
+}
+
+
+function atualizarDashboard(){
+    document.getElementById("totalEstoque").innerText=equipamentos.length;
+    document.getElementById("totalAptos").innerText=equipamentos.filter(e=>e.status==="Apto a Uso").length;
+    document.getElementById("totalDefeito").innerText=equipamentos.filter(e=>e.status==="Com Defeito").length;
+}
+
+/* ===== PDF ===== */
+
+function exportarPDF(){
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF();
+
+    doc.text("Controle de Equipamentos",14,15);
+
+    const dados=equipamentos.map(eq=>[
+        eq.nome,eq.modelo,eq.status,eq.defeito||"-"
+    ]);
+
+    doc.autoTable({
+        startY:25,
+        head:[["Equipamento","Modelo","Status","Defeito"]],
+        body:dados
+    });
+
+    doc.save("Equipamentos.pdf");
+}
+
+/* ===== EXCEL ===== */
+
+function exportarExcel(){
+    let tabela="Equipamento\tModelo\tStatus\tDefeito\n";
+    equipamentos.forEach(eq=>{
+        tabela+=`${eq.nome}\t${eq.modelo}\t${eq.status}\t${eq.defeito||""}\n`;
+    });
+
+    const blob=new Blob([tabela],{type:"application/vnd.ms-excel"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download="equipamentos.xls";
+    link.click();
+}
+
+/* ===== ETIQUETA ===== */
+
+function imprimirEtiqueta(i){
+    const eq=equipamentos[i];
+    const janela=window.open("","","width=400,height=300");
+
+    janela.document.write(`
+    <h2>Etiqueta de Equipamento</h2>
+    <hr>
+    <p><b>Equipamento:</b> ${eq.nome}</p>
+    <p><b>Modelo:</b> ${eq.modelo}</p>
+    <p><b>Status:</b> ${eq.status}</p>
+    ${eq.defeito?`<p><b>Defeito:</b> ${eq.defeito}</p>`:""}
+    <script>window.print();<\/script>
+    `);
+
+    janela.document.close();
+}
+
+/* ===== INICIAR ===== */
+
+window.onload=carregarLocal;
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Equipamentos</title>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
 body{font-family:Arial;background:#f4f6f9;padding:30px;}
 
 .container{
@@ -283,5 +648,6 @@ function voltar() {
 </body>
 
 </html>
+
 
 
