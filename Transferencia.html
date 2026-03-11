@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<meta charset="UTF-8">
+<title>Sistema Inventário TI</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f4f6f9;
+}
+
+header{
+background:#1f2937;
+color:white;
+padding:15px;
+font-size:20px;
+}
+
+header button{
+margin-left:5px;
+}
+
+.container{
+padding:20px;
+}
+
+input,select,button{
+padding:8px;
+margin:4px;
+}
+
+button{
+background:#2563eb;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+.card{
+background:white;
+padding:15px;
+margin:10px 0;
+border-radius:8px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.msg-sucesso{
+display:none;
+background:#16a34a;
+color:white;
+padding:10px;
+border-radius:6px;
+margin-top:10px;
+}
+
+#loginTela{
+display:flex;
+height:100vh;
+align-items:center;
+justify-content:center;
+}
+
+#loginBox{
+background:white;
+padding:30px;
+border-radius:8px;
+box-shadow:0 3px 8px rgba(0,0,0,0.2);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginTela">
+<div id="loginBox">
+
+<h2>Login Sistema TI</h2>
+
+<input id="usuario" placeholder="Usuário"><br>
+<input id="senha" type="password" placeholder="Senha"><br>
+
+<button onclick="login()">Entrar</button>
+
+</div>
+</div>
+
+<div id="app" style="display:none">
+
+<header>
+
+Sistema Inventário TI
+
+<span style="float:right">
+<button onclick="inicio()">Início</button>
+<button onclick="logout()">Sair</button>
+</span>
+
+</header>
+
+<div class="container">
+
+<!-- ADMIN -->
+
+<div id="admin" style="display:none">
+
+<div class="card">
+
+<h3>Cadastrar Equipamento</h3>
+
+<input id="patrimonio" placeholder="Patrimônio">
+<input id="nome" placeholder="Equipamento">
+<input id="quantidade" type="number" value="1">
+<input id="lojaEnvio" placeholder="Loja Origem">
+
+<select id="status">
+<option>Ativo</option>
+<option>Manutenção</option>
+<option>Estoque</option>
+</select>
+
+<button onclick="salvar()">Salvar</button>
+
+</div>
+
+<div class="card">
+
+<h3>Equipamentos</h3>
+
+<table>
+<thead>
+<tr>
+<th>Patrimônio</th>
+<th>Equipamento</th>
+<th>Quantidade</th>
+<th>Loja</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+</div>
+
+<div class="card">
+
+<h3>Movimentações</h3>
+
+<button onclick="exportarPDF()">Exportar PDF</button>
+
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Patrimônio</th>
+<th>Equipamento</th>
+<th>Origem</th>
+<th>Destino</th>
+<th>Responsável</th>
+<th>Data</th>
+</tr>
+</thead>
+
+<tbody id="tabelaMov"></tbody>
+</table>
+
+</div>
+
+<div class="card">
+<h3>Gráfico Movimentações</h3>
+<canvas id="graficoMov"></canvas>
+</div>
+
+</div>
+
+<!-- TECNICO -->
+
+<div id="tecnico" style="display:none">
+
+<div class="card">
+<h3>Painel Técnico</h3>
+
+<table>
+<thead>
+<tr>
+<th>Patrimônio</th>
+<th>Equipamento</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="tabelaTecnico"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<!-- LOJA -->
+
+<div id="loja" style="display:none">
+
+<div class="card">
+
+<h3>Transferência</h3>
+
+<input id="patTransfer" placeholder="Patrimônio">
+<input id="destinoTransfer" placeholder="Loja destino">
+<input id="respTransfer" placeholder="Responsável">
+
+<button onclick="transferenciaManual()">Transferir</button>
+
+<div id="msgSucesso" class="msg-sucesso">
+Transferência realizada com sucesso
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+let equipamentos = JSON.parse(localStorage.getItem("equipamentos") || "[]")
+let movimentacoes = JSON.parse(localStorage.getItem("movimentacoes") || "[]")
+
+let tipoUsuario=null
+let graficoMov
+
+const usuarios=[
+{usuario:"admin",senha:"123",tipo:"admin"},
+{usuario:"tecnico",senha:"123",tipo:"tecnico"},
+{usuario:"loja",senha:"123",tipo:"loja"}
+]
+
+function login(){
+
+let u=usuario.value
+let s=senha.value
+
+let ok=usuarios.find(x=>x.usuario===u && x.senha===s)
+
+if(!ok){
+alert("Login inválido")
+return
+}
+
+tipoUsuario=ok.tipo
+
+loginTela.style.display="none"
+app.style.display="block"
+
+inicio()
+
+render()
+renderTecnico()
+renderMovimentacoes()
+graficoMovimentacoes()
+
+}
+
+function inicio(){
+
+admin.style.display="none"
+tecnico.style.display="none"
+loja.style.display="none"
+
+if(tipoUsuario==="admin") admin.style.display="block"
+if(tipoUsuario==="tecnico") tecnico.style.display="block"
+if(tipoUsuario==="loja") loja.style.display="block"
+
+}
+
+function logout(){
+
+app.style.display="none"
+loginTela.style.display="flex"
+
+}
+
+function salvar(){
+
+const eq={
+patrimonio:patrimonio.value,
+nome:nome.value,
+quantidade:parseInt(quantidade.value),
+lojaEnvio:lojaEnvio.value,
+status:status.value
+}
+
+equipamentos.push(eq)
+
+localStorage.setItem("equipamentos",JSON.stringify(equipamentos))
+
+registrarMovimento("Cadastro",eq,eq.lojaEnvio,"-","Admin")
+
+render()
+
+}
+
+function render(){
+
+let html=""
+
+equipamentos.forEach(e=>{
+
+html+=`
+<tr>
+<td>${e.patrimonio}</td>
+<td>${e.nome}</td>
+<td>${e.quantidade}</td>
+<td>${e.lojaEnvio}</td>
+<td>${e.status}</td>
+</tr>
+`
+
+})
+
+tabela.innerHTML=html
+
+}
+
+function renderTecnico(){
+
+let html=""
+
+equipamentos.forEach(e=>{
+
+html+=`
+<tr>
+<td>${e.patrimonio}</td>
+<td>${e.nome}</td>
+<td>${e.status}</td>
+</tr>
+`
+
+})
+
+tabelaTecnico.innerHTML=html
+
+}
+
+function transferenciaManual(){
+
+const pat=patTransfer.value
+const destino=destinoTransfer.value
+const responsavel=respTransfer.value
+
+const eq=equipamentos.find(e=>e.patrimonio===pat)
+
+if(!eq){
+alert("Equipamento não encontrado")
+return
+}
+
+if(eq.quantidade<=0){
+alert("Sem estoque")
+return
+}
+
+if(responsavel===""){
+alert("Informe o responsável")
+return
+}
+
+const origem=eq.lojaEnvio
+
+eq.lojaEnvio=destino
+eq.quantidade--
+
+localStorage.setItem("equipamentos",JSON.stringify(equipamentos))
+
+registrarMovimento("Transferência",eq,origem,destino,responsavel)
+
+render()
+renderMovimentacoes()
+graficoMovimentacoes()
+
+imprimirCupom(eq,origem,destino,responsavel)
+
+patTransfer.value=""
+destinoTransfer.value=""
+respTransfer.value=""
+
+patTransfer.focus()
+
+const msg=document.getElementById("msgSucesso")
+
+msg.style.display="block"
+
+setTimeout(()=>{
+msg.style.display="none"
+},3000)
+
+}
+
+function registrarMovimento(tipo,e,origem,destino,responsavel){
+
+const mov={
+tipo:tipo,
+patrimonio:e.patrimonio,
+nome:e.nome,
+origem:origem,
+destino:destino,
+responsavel:responsavel,
+data:new Date().toLocaleString()
+}
+
+movimentacoes.push(mov)
+
+localStorage.setItem("movimentacoes",JSON.stringify(movimentacoes))
+
+}
+
+function renderMovimentacoes(){
+
+let html=""
+
+movimentacoes.slice().reverse().forEach(m=>{
+
+html+=`
+<tr>
+<td>${m.tipo}</td>
+<td>${m.patrimonio}</td>
+<td>${m.nome}</td>
+<td>${m.origem}</td>
+<td>${m.destino}</td>
+<td>${m.responsavel}</td>
+<td>${m.data}</td>
+</tr>
+`
+
+})
+
+tabelaMov.innerHTML=html
+
+}
+
+function graficoMovimentacoes(){
+
+let cad=movimentacoes.filter(m=>m.tipo==="Cadastro").length
+let trans=movimentacoes.filter(m=>m.tipo==="Transferência").length
+
+if(graficoMov)graficoMov.destroy()
+
+graficoMov=new Chart(document.getElementById("graficoMov"),{
+
+type:"bar",
+
+data:{
+labels:["Cadastros","Transferências"],
+datasets:[{
+label:"Movimentações",
+data:[cad,trans]
+}]
+}
+
+})
+
+}
+
+function exportarPDF(){
+
+const { jsPDF } = window.jspdf
+
+const doc = new jsPDF()
+
+doc.text("Relatório Movimentações TI",14,15)
+
+let linhas=[]
+
+movimentacoes.forEach(m=>{
+linhas.push([m.tipo,m.patrimonio,m.nome,m.origem,m.destino,m.responsavel,m.data])
+})
+
+doc.autoTable({
+head:[["Tipo","Patrimônio","Equipamento","Origem","Destino","Responsável","Data"]],
+body:linhas,
+startY:20
+})
+
+doc.save("movimentacoes_TI.pdf")
+
+}
+
+function imprimirCupom(e,origem,destino,responsavel){
+
+let texto=`
+
+========= TRANSFERÊNCIA TI =========
+
+Patrimônio: ${e.patrimonio}
+
+Equipamento:
+${e.nome}
+
+Origem:
+${origem}
+
+Destino:
+${destino}
+
+Responsável:
+${responsavel}
+
+------------------------------------
+
+Assinatura
+
+_________________________
+
+Data:
+${new Date().toLocaleString()}
+
+`
+
+const w=window.open("","","width=300,height=500")
+
+w.document.write("<pre>"+texto+"</pre>")
+
+w.print()
+
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+
+usuario.addEventListener("keypress",function(e){
+if(e.key==="Enter") login()
+})
+
+senha.addEventListener("keypress",function(e){
+if(e.key==="Enter") login()
+})
+
+patTransfer.addEventListener("keypress",function(e){
+if(e.key==="Enter") transferenciaManual()
+})
+
+})
+
+</script>
+
+</body>
+</html>
