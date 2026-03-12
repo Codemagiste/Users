@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventário TI - Romtech</title>
-
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9;}
 header{background:#0f172a;color:white;padding:15px;font-size:20px;}
@@ -17,7 +16,6 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 #login{display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:white;}
 #loginBox{background:#1e293b;padding:40px;border-radius:10px;}
 </style>
-
 </head>
 <body>
 
@@ -82,15 +80,13 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 </div>
 </div>
 
-<!-- SCRIPT FINAL NO FINAL DO BODY -->
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import Chart from "https://cdn.jsdelivr.net/npm/chart.js/dist/chart.esm.js";
 
-// === FIREBASE CONFIG ===
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
   authDomain: "romtech-e1e15.firebaseapp.com",
@@ -105,29 +101,33 @@ const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 const auth = getAuth(appFirebase);
 
-// === VARIÁVEIS GLOBAIS ===
 let equipamentos=[], movimentacoes=[], grafico;
 let userNivel="";
-
-// === FUNÇÕES ===
 
 // LOGIN
 async function login(){
   const email = document.getElementById("usuario").value;
   const senha = document.getElementById("senha").value;
   if(!email || !senha){ alert("Informe e-mail e senha"); return; }
+
+  console.log("Tentando login com:", email);
   try{
-    await signInWithEmailAndPassword(auth, email, senha);
+    const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+    console.log("Login OK:", userCredential.user);
+    alert("Login OK!");
+
     if(email==="admin@ultra.com") userNivel="admin";
     else if(email==="acesso@ultra.com") userNivel="supervisor";
     else if(email==="loja@ultra.com") userNivel="loja";
     else userNivel="supervisor";
-    configurarInterface(userNivel);
+
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
+    configurarInterface(userNivel);
     carregarEquipamentos();
     carregarMov();
   }catch(error){
+    console.error("Erro ao autenticar:", error);
     alert("Erro ao autenticar: "+error.message);
   }
 }
@@ -135,7 +135,7 @@ async function login(){
 // LOGOUT
 function logout(){ auth.signOut().then(()=>location.reload()); }
 
-// CONFIGURA INTERFACE
+// CONFIGURA INTERFACE POR NÍVEL
 function configurarInterface(nivel){
   if(nivel==="admin") return;
   if(nivel==="supervisor"){
@@ -158,9 +158,13 @@ async function salvarEquipamento(){
   const l=document.getElementById("loja").value;
   const s=document.getElementById("status").value;
   if(!p || !n){ alert("Preencha os campos"); return; }
-  await addDoc(collection(db,"equipamentos"),{patrimonio:p,nome:n,quantidade:q,loja:l,status:s});
-  document.getElementById("patrimonio").value=""; document.getElementById("nome").value=""; document.getElementById("loja").value="";
-  carregarEquipamentos();
+  try{
+    await addDoc(collection(db,"equipamentos"),{patrimonio:p,nome:n,quantidade:q,loja:l,status:s});
+    document.getElementById("patrimonio").value="";
+    document.getElementById("nome").value="";
+    document.getElementById("loja").value="";
+    carregarEquipamentos();
+  }catch(error){ alert("Erro ao salvar: "+error.message);}
 }
 
 // CARREGAR EQUIPAMENTOS
@@ -176,9 +180,8 @@ async function carregarEquipamentos(){
       <td>${e.quantidade}</td>
       <td>${e.loja}</td>
       <td>${e.status}</td>`;
-    if(userNivel==="admin"){
-      html+=`<td><button onclick="editarEquip('${docSnap.id}')">Editar</button> <button onclick="excluirEquip('${docSnap.id}')">Excluir</button></td>`;
-    }else html+="<td></td>";
+    if(userNivel==="admin") html+=`<td><button onclick="editarEquip('${docSnap.id}')">Editar</button> <button onclick="excluirEquip('${docSnap.id}')">Excluir</button></td>`;
+    else html+="<td></td>";
     html+="</tr>";
   });
   document.getElementById("tabelaEquip").innerHTML=html;
@@ -240,13 +243,13 @@ async function excluirEquip(id){
   carregarEquipamentos();
 }
 
-// === ADICIONAR EVENTOS AOS BOTÕES ===
+// EVENTOS DOS BOTÕES
 document.getElementById("btnLogin").addEventListener("click", login);
 document.getElementById("btnLogout").addEventListener("click", logout);
 document.getElementById("btnSalvar").addEventListener("click", salvarEquipamento);
 document.getElementById("btnTransferir").addEventListener("click", transferir);
 
-// Tornar funções globais para os botões dentro da tabela
+// Funções globais para botões na tabela
 window.editarEquip = editarEquip;
 window.excluirEquip = excluirEquip;
 window.finalizarMov = finalizarMov;
