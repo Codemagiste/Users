@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Inventário TI</title>
+<title>Sistema Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -18,11 +18,18 @@ header{
 background:#0f172a;
 color:white;
 padding:15px;
-font-size:20px;
 }
 
 .container{
 padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+margin-bottom:20px;
+border-radius:8px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 input,select,button{
@@ -38,27 +45,14 @@ border-radius:4px;
 cursor:pointer;
 }
 
-button:hover{
-background:#1d4ed8;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
 }
 
 th,td{
 border:1px solid #ddd;
 padding:8px;
-}
-
-.card{
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:8px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 #login{
@@ -85,7 +79,7 @@ border-radius:10px;
 
 <div id="loginBox">
 
-<h2>Sistema Inventário TI</h2>
+<h2>Inventário TI</h2>
 
 <input id="usuario" placeholder="Email"><br>
 <input id="senha" type="password" placeholder="Senha"><br>
@@ -93,19 +87,21 @@ border-radius:10px;
 <button onclick="login()">Entrar</button>
 
 </div>
-
 </div>
 
 <div id="app" style="display:none">
 
 <header>
-Inventário TI
+
+Sistema Inventário TI
+
 <button onclick="logout()" style="float:right">Sair</button>
+
 </header>
 
 <div class="container">
 
-<div class="card">
+<div id="cardCadastro" class="card">
 
 <h3>Cadastrar Equipamento</h3>
 
@@ -125,41 +121,19 @@ Inventário TI
 
 </div>
 
-<div class="card">
-
-<h3>Equipamentos</h3>
-
-<table>
-
-<thead>
-<tr>
-<th>Patrimônio</th>
-<th>Equipamento</th>
-<th>Qtd</th>
-<th>Loja</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="tabelaEquip"></tbody>
-
-</table>
-
-</div>
-
-<div class="card">
+<div id="cardTransferencia" class="card">
 
 <h3>Transferência</h3>
 
 <input id="patTransfer" placeholder="Patrimônio">
-<input id="destino" placeholder="Destino">
-<input id="responsavel" placeholder="Responsável">
+<input id="destino" placeholder="Loja destino">
+<input id="responsavel" placeholder="Responsável envio">
 
 <button onclick="transferir()">Transferir</button>
 
 </div>
 
-<div class="card">
+<div id="cardMov" class="card">
 
 <h3>Movimentações</h3>
 
@@ -174,6 +148,7 @@ Inventário TI
 <th>Status</th>
 <th>Responsável</th>
 <th>Data</th>
+<th>Ação</th>
 </tr>
 </thead>
 
@@ -186,6 +161,7 @@ Inventário TI
 <div class="card">
 
 <h3>Dashboard</h3>
+
 <canvas id="grafico"></canvas>
 
 </div>
@@ -211,24 +187,22 @@ signOut,
 onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const firebaseConfig = {
+const firebaseConfig={
+apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+authDomain:"romtech-e1e15.firebaseapp.com",
+projectId:"romtech-e1e15",
+storageBucket:"romtech-e1e15.firebasestorage.app",
+messagingSenderId:"153455301031",
+appId:"1:153455301031:web:6933f2bc3f6e485c2f2682"
+}
 
-apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
-authDomain: "romtech-e1e15.firebaseapp.com",
-projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.firebasestorage.app",
-messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
+const appFirebase=initializeApp(firebaseConfig)
 
-};
+const db=getFirestore(appFirebase)
 
-const appFirebase = initializeApp(firebaseConfig);
+const auth=getAuth(appFirebase)
 
-const db = getFirestore(appFirebase);
-
-const auth = getAuth(appFirebase);
-
-let equipamentos=[]
+let perfil=""
 let movimentacoes=[]
 let grafico
 
@@ -246,8 +220,7 @@ await signInWithEmailAndPassword(auth,email,senha)
 
 }catch(error){
 
-console.log(error)
-alert("Usuário ou senha inválidos")
+alert(error.message)
 
 }
 
@@ -270,7 +243,23 @@ if(user){
 loginDiv.style.display="none"
 appDiv.style.display="block"
 
-carregarEquipamentos()
+const email=user.email
+
+if(email==="admin@ultra.com"){
+perfil="admin"
+mostrarAdmin()
+}
+
+if(email==="loja@ultra.com"){
+perfil="loja"
+mostrarLoja()
+}
+
+if(email==="acesso@ultra.com"){
+perfil="acesso"
+mostrarAcesso()
+}
+
 carregarMov()
 
 }else{
@@ -282,6 +271,30 @@ appDiv.style.display="none"
 
 })
 
+function mostrarAdmin(){
+
+document.getElementById("cardCadastro").style.display="block"
+document.getElementById("cardTransferencia").style.display="block"
+document.getElementById("cardMov").style.display="block"
+
+}
+
+function mostrarLoja(){
+
+document.getElementById("cardCadastro").style.display="none"
+document.getElementById("cardTransferencia").style.display="block"
+document.getElementById("cardMov").style.display="none"
+
+}
+
+function mostrarAcesso(){
+
+document.getElementById("cardCadastro").style.display="none"
+document.getElementById("cardTransferencia").style.display="none"
+document.getElementById("cardMov").style.display="block"
+
+}
+
 async function salvarEquipamento(){
 
 const patrimonio=document.getElementById("patrimonio").value
@@ -291,52 +304,14 @@ const loja=document.getElementById("loja").value
 const status=document.getElementById("status").value
 
 await addDoc(collection(db,"equipamentos"),{
-
-patrimonio,
-nome,
-quantidade,
-loja,
-status
-
+patrimonio,nome,quantidade,loja,status
 })
 
-carregarEquipamentos()
+alert("Equipamento cadastrado")
 
 }
 
 window.salvarEquipamento=salvarEquipamento
-
-async function carregarEquipamentos(){
-
-const querySnapshot = await getDocs(collection(db,"equipamentos"))
-
-equipamentos=[]
-
-let html=""
-
-querySnapshot.forEach((doc)=>{
-
-const e=doc.data()
-
-equipamentos.push(e)
-
-html+=`
-
-<tr>
-<td>${e.patrimonio}</td>
-<td>${e.nome}</td>
-<td>${e.quantidade}</td>
-<td>${e.loja}</td>
-<td>${e.status}</td>
-</tr>
-
-`
-
-})
-
-document.getElementById("tabelaEquip").innerHTML=html
-
-}
 
 async function transferir(){
 
@@ -344,31 +319,19 @@ const pat=document.getElementById("patTransfer").value
 const dest=document.getElementById("destino").value
 const resp=document.getElementById("responsavel").value
 
-const eq=equipamentos.find(e=>e.patrimonio==pat)
-
-if(!eq){
-
-alert("Equipamento não encontrado")
-return
-
-}
-
 const mov={
-
 tipo:"Transferência",
-patrimonio:eq.patrimonio,
-origem:eq.loja,
+patrimonio:pat,
+origem:"Loja origem",
 destino:dest,
 status:"Em transporte",
 responsavel:resp,
 data:new Date().toLocaleString()
-
 }
 
 await addDoc(collection(db,"movimentacoes"),mov)
 
 carregarMov()
-carregarEquipamentos()
 
 }
 
@@ -376,11 +339,10 @@ window.transferir=transferir
 
 async function carregarMov(){
 
-const querySnapshot = await getDocs(collection(db,"movimentacoes"))
-
-movimentacoes=[]
+const querySnapshot=await getDocs(collection(db,"movimentacoes"))
 
 let html=""
+movimentacoes=[]
 
 querySnapshot.forEach((doc)=>{
 
@@ -389,7 +351,6 @@ const m=doc.data()
 movimentacoes.push(m)
 
 html+=`
-
 <tr>
 <td>${m.tipo}</td>
 <td>${m.patrimonio}</td>
@@ -398,8 +359,10 @@ html+=`
 <td>${m.status}</td>
 <td>${m.responsavel}</td>
 <td>${m.data}</td>
+<td>
+<button onclick="confirmar('${m.patrimonio}')">Confirmar</button>
+</td>
 </tr>
-
 `
 
 })
@@ -409,6 +372,29 @@ document.getElementById("tabelaMov").innerHTML=html
 graficoDashboard()
 
 }
+
+async function confirmar(pat){
+
+const nome=prompt("Nome de quem recebeu")
+const loja=prompt("Número da loja")
+
+const mov={
+tipo:"Recebimento",
+patrimonio:pat,
+origem:"Transporte",
+destino:loja,
+status:"Recebido",
+responsavel:nome,
+data:new Date().toLocaleString()
+}
+
+await addDoc(collection(db,"movimentacoes"),mov)
+
+carregarMov()
+
+}
+
+window.confirmar=confirmar
 
 function graficoDashboard(){
 
@@ -436,4 +422,3 @@ data:[movimentacoes.length]
 
 </body>
 </html>
-
