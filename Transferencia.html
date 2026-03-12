@@ -77,7 +77,6 @@ border-radius:10px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -100,11 +99,8 @@ border-radius:10px;
 <div id="app" style="display:none">
 
 <header>
-
 Inventário TI
-
 <button onclick="logout()" style="float:right">Sair</button>
-
 </header>
 
 <div class="container">
@@ -136,7 +132,6 @@ Inventário TI
 <table>
 
 <thead>
-
 <tr>
 <th>Patrimônio</th>
 <th>Equipamento</th>
@@ -144,7 +139,6 @@ Inventário TI
 <th>Loja</th>
 <th>Status</th>
 </tr>
-
 </thead>
 
 <tbody id="tabelaEquip"></tbody>
@@ -172,7 +166,6 @@ Inventário TI
 <table>
 
 <thead>
-
 <tr>
 <th>Tipo</th>
 <th>Patrimônio</th>
@@ -182,7 +175,6 @@ Inventário TI
 <th>Responsável</th>
 <th>Data</th>
 </tr>
-
 </thead>
 
 <tbody id="tabelaMov"></tbody>
@@ -194,7 +186,6 @@ Inventário TI
 <div class="card">
 
 <h3>Dashboard</h3>
-
 <canvas id="grafico"></canvas>
 
 </div>
@@ -204,31 +195,31 @@ Inventário TI
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 getFirestore,
 collection,
 addDoc,
 getDocs
-}
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
 getAuth,
 signInWithEmailAndPassword,
 signOut,
 onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
+
 apiKey: "SUA_API_KEY",
 authDomain: "SEU_AUTH_DOMAIN",
 projectId: "SEU_PROJECT_ID",
 storageBucket: "SEU_BUCKET",
 messagingSenderId: "SEU_ID",
 appId: "SEU_APP_ID"
+
 };
 
 const appFirebase = initializeApp(firebaseConfig);
@@ -255,6 +246,7 @@ await signInWithEmailAndPassword(auth,email,senha)
 
 }catch(error){
 
+console.log(error)
 alert("Usuário ou senha inválidos")
 
 }
