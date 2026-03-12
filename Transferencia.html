@@ -2,54 +2,50 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Inventário TI</title>
-
+<title>Inventário TI - Romtech</title>
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 // CONFIGURAÇÃO FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyB01Ht6TLmpMc3xhN5euPZo5ecC4RJtfJrJu8-ivBw",
-  authDomain: "transferenciasromtech.firebaseapp.com",
-  projectId: "transferenciasromtech",
-  storageBucket: "transferenciasromtech.firebasestorage.app",
-  messagingSenderId: "325076792042",
-  appId: "1:325076792042:web:c2909131d0d089d6495d93"
+  apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+  authDomain: "romtech-e1e15.firebaseapp.com",
+  projectId: "romtech-e1e15",
+  storageBucket: "romtech-e1e15.firebasestorage.app",
+  messagingSenderId: "153455301031",
+  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
+  measurementId: "G-1DBYYTTXM4"
 };
 
 const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 const auth = getAuth(appFirebase);
 
-// VARIÁVEIS GLOBAIS
 let equipamentos=[], movimentacoes=[], grafico;
 let userNivel="";
 
-// ELEMENTOS DOM
-const loginDiv = document.getElementById("login");
-const appDiv = document.getElementById("app");
+const loginDiv=document.getElementById("login");
+const appDiv=document.getElementById("app");
 
-// LOGIN COM FIREBASE AUTH
+// LOGIN REAL FIREBASE AUTH
 async function login(){
   const email = document.getElementById("usuario").value;
   const senha = document.getElementById("senha").value;
-
   if(!email || !senha){ alert("Informe e-mail e senha"); return; }
 
   try{
-    const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-    const user = userCredential.user;
+    await signInWithEmailAndPassword(auth, email, senha);
 
-    // Definir nível de acesso (pode usar claim custom no Firebase para produção)
+    // Definir nível de acesso
     if(email==="admin@ultra.com") userNivel="admin";
     else if(email==="acesso@ultra.com") userNivel="supervisor";
     else if(email==="loja@ultra.com") userNivel="loja";
-    else userNivel="supervisor"; // padrão
+    else userNivel="supervisor";
 
     configurarInterface(userNivel);
-
     loginDiv.style.display="none";
     appDiv.style.display="block";
 
@@ -57,24 +53,20 @@ async function login(){
     carregarMov();
 
   }catch(error){
-    alert("Erro ao autenticar: " + error.message);
+    alert("Erro ao autenticar: "+error.message);
   }
 }
-
-window.login = login;
+window.login=login;
 
 // LOGOUT
 function logout(){
-  auth.signOut().then(()=>{
-    location.reload();
-  });
+  auth.signOut().then(()=>{ location.reload(); });
 }
-
-window.logout = logout;
+window.logout=logout;
 
 // CONFIGURAÇÃO DA INTERFACE POR NÍVEL
 function configurarInterface(nivel){
-  if(nivel==="admin") return; // tudo visível
+  if(nivel==="admin") return;
   if(nivel==="supervisor"){
     document.getElementById("cardCadastro").style.display="none";
     document.getElementById("cardTransferencia").style.display="none";
@@ -103,41 +95,37 @@ async function salvarEquipamento(){
     document.getElementById("nome").value="";
     document.getElementById("loja").value="";
     carregarEquipamentos();
-  }catch(error){ alert("Erro ao salvar: " + error.message);}
+  }catch(error){ alert("Erro ao salvar: "+error.message);}
 }
-
-window.salvarEquipamento = salvarEquipamento;
+window.salvarEquipamento=salvarEquipamento;
 
 // CARREGAR EQUIPAMENTOS
 async function carregarEquipamentos(){
-  const querySnapshot=await getDocs(collection(db,"equipamentos"));
+  const querySnapshot = await getDocs(collection(db,"equipamentos"));
   equipamentos=[]; let html="";
 
   querySnapshot.forEach(docSnap=>{
-    const e=docSnap.data();
+    const e = docSnap.data();
     equipamentos.push({id:docSnap.id,...e});
-
     html+=`<tr>
       <td>${e.patrimonio}</td>
       <td>${e.nome}</td>
       <td>${e.quantidade}</td>
       <td>${e.loja}</td>
       <td>${e.status}</td>`;
-
     if(userNivel==="admin"){
       html+=`<td>
         <button onclick="editarEquip('${docSnap.id}')">Editar</button>
         <button onclick="excluirEquip('${docSnap.id}')">Excluir</button>
       </td>`;
     }else html+="<td></td>";
-
     html+="</tr>";
   });
 
   document.getElementById("tabelaEquip").innerHTML=html;
 }
 
-// TRANSFERIR (Admin + Loja)
+// TRANSFERÊNCIA (Admin + Loja)
 async function transferir(){
   const pat=document.getElementById("patTransfer").value;
   const dest=document.getElementById("destino").value;
@@ -160,9 +148,8 @@ async function transferir(){
     await addDoc(collection(db,"movimentacoes"),mov);
     carregarEquipamentos();
     carregarMov();
-  }catch(error){ alert("Erro na transferência: " + error.message);}
+  }catch(error){ alert("Erro na transferência: "+error.message);}
 }
-
 window.transferir=transferir;
 
 // CARREGAR MOVIMENTAÇÕES
@@ -205,7 +192,7 @@ function graficoDashboard(){
   if(grafico) grafico.destroy();
   grafico=new Chart(document.getElementById("grafico"),{
     type:"bar",
-    data:{labels:["Movimentações"],datasets:[{label:"Total", data:[movimentacoes.length]}]}
+    data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}
   });
 }
 
@@ -301,7 +288,5 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 
 </div>
 </div>
-
 </body>
 </html>
-
