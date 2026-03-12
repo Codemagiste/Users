@@ -5,97 +5,52 @@
 <title>Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
-
 body{
 font-family:Arial;
 margin:0;
 background:#f1f5f9;
 }
-
 header{
 background:#0f172a;
 color:white;
 padding:15px;
 font-size:20px;
 }
-
-.container{
-padding:20px;
-}
-
-input,select,button{
-padding:8px;
-margin:4px;
-}
-
+.container{padding:20px;}
+input,select,button{padding:8px;margin:4px;}
 button{
-background:#2563eb;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
+background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;
 }
-
-button:hover{
-background:#1d4ed8;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
-}
-
+button:hover{background:#1d4ed8;}
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 .card{
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:8px;
+background:white;padding:15px;margin:10px 0;border-radius:8px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
-
 #login{
-display:flex;
-height:100vh;
-align-items:center;
-justify-content:center;
-background:#0f172a;
-color:white;
+display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:white;
 }
-
 #loginBox{
-background:#1e293b;
-padding:40px;
-border-radius:10px;
+background:#1e293b;padding:40px;border-radius:10px;
 }
-
 </style>
 </head>
-
 <body>
 
+<!-- LOGIN -->
 <div id="login">
-
-<div id="loginBox">
-
-<h2>Sistema Inventário TI</h2>
-
-<input id="usuario" placeholder="Usuário"><br>
-<input id="senha" type="password" placeholder="Senha"><br>
-
-<button onclick="login()">Entrar</button>
-
-</div>
+  <div id="loginBox">
+    <h2>Sistema Inventário TI</h2>
+    <input id="usuario" placeholder="Usuário"><br>
+    <input id="senha" type="password" placeholder="Senha"><br>
+    <button onclick="login()">Entrar</button>
+  </div>
 </div>
 
+<!-- APLICAÇÃO -->
 <div id="app" style="display:none">
 
 <header>
@@ -105,32 +60,26 @@ Inventário TI
 
 <div class="container">
 
-<div class="card">
-
+<!-- CADASTRO (Admin) -->
+<div class="card" id="cardCadastro">
 <h3>Cadastrar Equipamento</h3>
-
 <input id="patrimonio" placeholder="Patrimônio">
 <input id="nome" placeholder="Equipamento">
 <input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
-
 <select id="status">
 <option>Ativo</option>
 <option>Estoque</option>
 <option>Manutenção</option>
 <option>Defeito</option>
 </select>
-
 <button onclick="salvarEquipamento()">Salvar</button>
-
 </div>
 
-<div class="card">
-
+<!-- TABELA DE EQUIPAMENTOS (Admin + Supervisor) -->
+<div class="card" id="cardEquipamentos">
 <h3>Equipamentos</h3>
-
 <table>
-
 <thead>
 <tr>
 <th>Patrimônio</th>
@@ -138,33 +87,26 @@ Inventário TI
 <th>Qtd</th>
 <th>Loja</th>
 <th>Status</th>
+<th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="tabelaEquip"></tbody>
-
 </table>
-
 </div>
 
-<div class="card">
-
+<!-- TRANSFERÊNCIA (Admin + Loja) -->
+<div class="card" id="cardTransferencia">
 <h3>Transferência</h3>
-
 <input id="patTransfer" placeholder="Patrimônio">
 <input id="destino" placeholder="Destino">
 <input id="responsavel" placeholder="Responsável">
-
 <button onclick="transferir()">Transferir</button>
-
 </div>
 
-<div class="card">
-
+<!-- MOVIMENTAÇÕES (Todos) -->
+<div class="card" id="cardMovimentacoes">
 <h3>Movimentações</h3>
-
 <table>
-
 <thead>
 <tr>
 <th>Tipo</th>
@@ -174,21 +116,17 @@ Inventário TI
 <th>Status</th>
 <th>Responsável</th>
 <th>Data</th>
+<th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="tabelaMov"></tbody>
-
 </table>
-
 </div>
 
-<div class="card">
-
+<!-- DASHBOARD (Admin) -->
+<div class="card" id="cardDashboard">
 <h3>Dashboard</h3>
-
 <canvas id="grafico"></canvas>
-
 </div>
 
 </div>
@@ -197,200 +135,212 @@ Inventário TI
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-import {
-getFirestore,
-collection,
-addDoc,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-
+// CONFIG FIREBASE
 const firebaseConfig = {
-apiKey: "AIzaSyB01Ht6TLmpMc3xhN5euPZo5ecC4RJtfJrJu8-ivBw",
-authDomain: "romtech-e1e15.firebaseapp.com",
-projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.firebasestorage.app",
-messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
+apiKey: "APIKEY",
+authDomain: "transferenciasromtech.firebaseapp.com",
+projectId: "transferenciasromtech",
+storageBucket: "transferenciasromtech.firebasestorage.app",
+messagingSenderId: "325076792042",
+appId: "1:325076792042:web:c2909131d0d089d6495d93"
 };
 
 const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 
-let equipamentos=[]
-let movimentacoes=[]
-let grafico
+// VARIÁVEIS
+let equipamentos=[], movimentacoes=[], grafico;
+const loginDiv=document.getElementById("login");
+const appDiv=document.getElementById("app");
 
-// ELEMENTOS DOM
-const loginDiv = document.getElementById("login")
-const appDiv = document.getElementById("app")
-
-// LOGIN
+// LOGIN COM NÍVEL
 function login(){
+  const user=document.getElementById("usuario").value;
+  const pass=document.getElementById("senha").value;
+  let nivel="";
 
-const user=document.getElementById("usuario").value
-const pass=document.getElementById("senha").value
+  // Usuários hardcoded (pode migrar para Firebase Auth)
+  if(user==="admin@ultra.com" && pass==="admin123") nivel="admin";
+  else if(user==="acesso@ultra.com" && pass==="acesso123") nivel="supervisor";
+  else if(user==="loja@ultra.com" && pass==="loja123") nivel="loja";
+  else{alert("Usuário ou senha inválidos"); return;}
 
-if(user==="" || pass===""){
-alert("Informe usuário e senha")
-return
+  window.userNivel = nivel;
+  loginDiv.style.display="none";
+  appDiv.style.display="block";
+
+  configurarInterface(nivel);
+  carregarEquipamentos();
+  carregarMov();
+}
+window.login=login;
+
+// CONFIGURAÇÃO DE INTERFACE
+function configurarInterface(nivel){
+  // Admin: tudo visível
+  if(nivel==="admin") return;
+
+  // Supervisor: apenas visualizar equipamentos e movimentações
+  if(nivel==="supervisor"){
+    document.getElementById("cardCadastro").style.display="none";
+    document.getElementById("cardTransferencia").style.display="none";
+    document.getElementById("cardDashboard").style.display="none";
+  }
+
+  // Loja: apenas transferências
+  if(nivel==="loja"){
+    document.getElementById("cardCadastro").style.display="none";
+    document.getElementById("cardEquipamentos").style.display="none";
+    document.getElementById("cardDashboard").style.display="none";
+  }
 }
 
-loginDiv.style.display="none"
-appDiv.style.display="block"
+// LOGOUT
+function logout(){ location.reload(); }
+window.logout=logout;
 
-carregarEquipamentos()
-carregarMov()
-
-}
-
-window.login=login
-
-function logout(){
-location.reload()
-}
-
-window.logout=logout
-
-// SALVAR EQUIPAMENTO
+// SALVAR EQUIPAMENTO (Admin)
 async function salvarEquipamento(){
+  const patrimonio=document.getElementById("patrimonio").value;
+  const nome=document.getElementById("nome").value;
+  const quantidade=parseInt(document.getElementById("quantidade").value);
+  const loja=document.getElementById("loja").value;
+  const status=document.getElementById("status").value;
 
-const patrimonio=document.getElementById("patrimonio").value
-const nome=document.getElementById("nome").value
-const quantidade=parseInt(document.getElementById("quantidade").value)
-const loja=document.getElementById("loja").value
-const status=document.getElementById("status").value
+  if(!patrimonio || !nome){ alert("Preencha os campos"); return; }
 
-await addDoc(collection(db,"equipamentos"),{
-patrimonio,
-nome,
-quantidade,
-loja,
-status
-})
+  await addDoc(collection(db,"equipamentos"),{patrimonio,nome,quantidade,loja,status});
 
-carregarEquipamentos()
+  document.getElementById("patrimonio").value="";
+  document.getElementById("nome").value="";
+  document.getElementById("loja").value="";
 
+  carregarEquipamentos();
 }
-
-window.salvarEquipamento=salvarEquipamento
+window.salvarEquipamento=salvarEquipamento;
 
 // CARREGAR EQUIPAMENTOS
 async function carregarEquipamentos(){
+  const querySnapshot=await getDocs(collection(db,"equipamentos"));
+  equipamentos=[]; let html="";
 
-const querySnapshot = await getDocs(collection(db,"equipamentos"))
+  querySnapshot.forEach(docSnap=>{
+    const e=docSnap.data();
+    equipamentos.push({id:docSnap.id,...e});
 
-equipamentos=[]
-let html=""
+    html+=`<tr>
+      <td>${e.patrimonio}</td>
+      <td>${e.nome}</td>
+      <td>${e.quantidade}</td>
+      <td>${e.loja}</td>
+      <td>${e.status}</td>`;
 
-querySnapshot.forEach((doc)=>{
+    // AÇÕES (Editar/Excluir) apenas Admin
+    if(window.userNivel==="admin"){
+      html+=`<td>
+        <button onclick="editarEquip('${docSnap.id}')">Editar</button>
+        <button onclick="excluirEquip('${docSnap.id}')">Excluir</button>
+      </td>`;
+    }else html+="<td></td>";
 
-const e=doc.data()
+    html+="</tr>";
+  });
 
-equipamentos.push(e)
-
-html+=`
-<tr>
-<td>${e.patrimonio}</td>
-<td>${e.nome}</td>
-<td>${e.quantidade}</td>
-<td>${e.loja}</td>
-<td>${e.status}</td>
-</tr>
-`
-
-})
-
-document.getElementById("tabelaEquip").innerHTML=html
-
+  document.getElementById("tabelaEquip").innerHTML=html;
 }
 
-// TRANSFERIR
+// TRANSFERIR (Admin + Loja)
 async function transferir(){
+  const pat=document.getElementById("patTransfer").value;
+  const dest=document.getElementById("destino").value;
+  const resp=document.getElementById("responsavel").value;
+  const eq=equipamentos.find(e=>e.patrimonio==pat);
 
-const pat=document.getElementById("patTransfer").value
-const dest=document.getElementById("destino").value
-const resp=document.getElementById("responsavel").value
+  if(!eq){ alert("Equipamento não encontrado"); return; }
 
-const eq=equipamentos.find(e=>e.patrimonio==pat)
+  // Atualiza loja
+  await updateDoc(doc(db,"equipamentos",eq.id),{loja:dest});
 
-if(!eq){
-alert("Equipamento não encontrado")
-return
+  const mov={
+    tipo:"Transferência",
+    patrimonio:eq.patrimonio,
+    origem:eq.loja,
+    destino:dest,
+    status:"Em transporte",
+    responsavel:resp,
+    data:new Date().toLocaleString()
+  }
+
+  await addDoc(collection(db,"movimentacoes"),mov);
+
+  carregarEquipamentos();
+  carregarMov();
 }
-
-const mov={
-tipo:"Transferência",
-patrimonio:eq.patrimonio,
-origem:eq.loja,
-destino:dest,
-status:"Em transporte",
-responsavel:resp,
-data:new Date().toLocaleString()
-}
-
-await addDoc(collection(db,"movimentacoes"),mov)
-
-carregarMov()
-carregarEquipamentos()
-
-}
-
-window.transferir=transferir
+window.transferir=transferir;
 
 // CARREGAR MOVIMENTAÇÕES
 async function carregarMov(){
+  const querySnapshot=await getDocs(collection(db,"movimentacoes"));
+  movimentacoes=[]; let html="";
 
-const querySnapshot = await getDocs(collection(db,"movimentacoes"))
+  querySnapshot.forEach(docSnap=>{
+    const m=docSnap.data();
+    movimentacoes.push({id:docSnap.id,...m});
 
-movimentacoes=[]
-let html=""
+    html+=`<tr>
+      <td>${m.tipo}</td>
+      <td>${m.patrimonio}</td>
+      <td>${m.origem}</td>
+      <td>${m.destino}</td>
+      <td>${m.status}</td>
+      <td>${m.responsavel}</td>
+      <td>${m.data}</td>`;
 
-querySnapshot.forEach((doc)=>{
+    // Botão FINALIZAR apenas Admin
+    if(window.userNivel==="admin"){
+      html+=`<td><button onclick="finalizarMov('${docSnap.id}')">Finalizar</button></td>`;
+    }else html+="<td></td>";
 
-const m=doc.data()
+    html+="</tr>";
+  });
 
-movimentacoes.push(m)
+  document.getElementById("tabelaMov").innerHTML=html;
+  graficoDashboard();
+}
 
-html+=`
-<tr>
-<td>${m.tipo}</td>
-<td>${m.patrimonio}</td>
-<td>${m.origem}</td>
-<td>${m.destino}</td>
-<td>${m.status}</td>
-<td>${m.responsavel}</td>
-<td>${m.data}</td>
-</tr>
-`
-
-})
-
-document.getElementById("tabelaMov").innerHTML=html
-
-graficoDashboard()
-
+// FINALIZAR TRANSFERÊNCIA (Admin)
+async function finalizarMov(id){
+  await updateDoc(doc(db,"movimentacoes",id),{status:"Finalizado"});
+  carregarMov();
 }
 
 // DASHBOARD
 function graficoDashboard(){
-
-if(grafico)grafico.destroy()
-
-grafico=new Chart(
-document.getElementById("grafico"),
-{
-type:"bar",
-data:{
-labels:["Movimentações"],
-datasets:[{
-label:"Total",
-data:[movimentacoes.length]
-}]
+  if(grafico) grafico.destroy();
+  grafico=new Chart(document.getElementById("grafico"),{
+    type:"bar",
+    data:{
+      labels:["Movimentações"],
+      datasets:[{label:"Total", data:[movimentacoes.length]}]
+    }
+  });
 }
-})
 
+// FUNÇÕES DE EDITAR / EXCLUIR (Admin)
+async function editarEquip(id){
+  const eq=equipamentos.find(e=>e.id===id);
+  const novoNome=prompt("Editar nome:", eq.nome);
+  if(novoNome) await updateDoc(doc(db,"equipamentos",id),{nome:novoNome});
+  carregarEquipamentos();
+}
+
+async function excluirEquip(id){
+  if(confirm("Deseja excluir este equipamento?")){
+    await updateDoc(doc(db,"equipamentos",id),{status:"Excluído"});
+    carregarEquipamentos();
+  }
 }
 
 </script>
