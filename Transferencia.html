@@ -4,220 +4,6 @@
 <meta charset="UTF-8">
 <title>Inventário TI - Romtech</title>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { Chart } from "https://cdn.jsdelivr.net/npm/chart.js";
-
-// === CONFIGURAÇÃO FIREBASE ===
-const firebaseConfig = {
-  apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
-  authDomain: "romtech-e1e15.firebaseapp.com",
-  projectId: "romtech-e1e15",
-  storageBucket: "romtech-e1e15.appspot.com",
-  messagingSenderId: "153455301031",
-  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
-  measurementId: "G-1DBYYTTXM4"
-};
-
-const appFirebase = initializeApp(firebaseConfig);
-const db = getFirestore(appFirebase);
-const auth = getAuth(appFirebase);
-
-// === VARIÁVEIS GLOBAIS ===
-let equipamentos=[], movimentacoes=[], grafico;
-let userNivel="";
-
-// === ELEMENTOS DOM ===
-const loginDiv=document.getElementById("login");
-const appDiv=document.getElementById("app");
-
-// === LOGIN FIREBASE AUTH ===
-async function login(){
-  const email = document.getElementById("usuario").value;
-  const senha = document.getElementById("senha").value;
-
-  if(!email || !senha){ alert("Informe e-mail e senha"); return; }
-
-  try{
-    await signInWithEmailAndPassword(auth, email, senha);
-
-    // Definir nível de acesso
-    if(email==="admin@ultra.com") userNivel="admin";
-    else if(email==="acesso@ultra.com") userNivel="supervisor";
-    else if(email==="loja@ultra.com") userNivel="loja";
-    else userNivel="supervisor"; // padrão
-
-    configurarInterface(userNivel);
-    loginDiv.style.display="none";
-    appDiv.style.display="block";
-
-    carregarEquipamentos();
-    carregarMov();
-
-  }catch(error){
-    alert("Erro ao autenticar: "+error.message);
-  }
-}
-window.login=login;
-
-// === LOGOUT ===
-function logout(){
-  auth.signOut().then(()=>{ location.reload(); });
-}
-window.logout=logout;
-
-// === CONFIGURA INTERFACE POR NÍVEL ===
-function configurarInterface(nivel){
-  if(nivel==="admin") return;
-  if(nivel==="supervisor"){
-    document.getElementById("cardCadastro").style.display="none";
-    document.getElementById("cardTransferencia").style.display="none";
-    document.getElementById("cardDashboard").style.display="none";
-  }
-  if(nivel==="loja"){
-    document.getElementById("cardCadastro").style.display="none";
-    document.getElementById("cardEquipamentos").style.display="none";
-    document.getElementById("cardDashboard").style.display="none";
-  }
-}
-
-// === SALVAR EQUIPAMENTO (Admin) ===
-async function salvarEquipamento(){
-  const patrimonio=document.getElementById("patrimonio").value;
-  const nome=document.getElementById("nome").value;
-  const quantidade=parseInt(document.getElementById("quantidade").value);
-  const loja=document.getElementById("loja").value;
-  const status=document.getElementById("status").value;
-
-  if(!patrimonio || !nome){ alert("Preencha os campos"); return; }
-
-  try{
-    await addDoc(collection(db,"equipamentos"),{patrimonio,nome,quantidade,loja,status});
-    document.getElementById("patrimonio").value="";
-    document.getElementById("nome").value="";
-    document.getElementById("loja").value="";
-    carregarEquipamentos();
-  }catch(error){ alert("Erro ao salvar: "+error.message);}
-}
-window.salvarEquipamento=salvarEquipamento;
-
-// === CARREGAR EQUIPAMENTOS ===
-async function carregarEquipamentos(){
-  const querySnapshot = await getDocs(collection(db,"equipamentos"));
-  equipamentos=[]; let html="";
-
-  querySnapshot.forEach(docSnap=>{
-    const e = docSnap.data();
-    equipamentos.push({id:docSnap.id,...e});
-    html+=`<tr>
-      <td>${e.patrimonio}</td>
-      <td>${e.nome}</td>
-      <td>${e.quantidade}</td>
-      <td>${e.loja}</td>
-      <td>${e.status}</td>`;
-    if(userNivel==="admin"){
-      html+=`<td>
-        <button onclick="editarEquip('${docSnap.id}')">Editar</button>
-        <button onclick="excluirEquip('${docSnap.id}')">Excluir</button>
-      </td>`;
-    }else html+="<td></td>";
-    html+="</tr>";
-  });
-
-  document.getElementById("tabelaEquip").innerHTML=html;
-}
-
-// === TRANSFERÊNCIA (Admin + Loja) ===
-async function transferir(){
-  const pat=document.getElementById("patTransfer").value;
-  const dest=document.getElementById("destino").value;
-  const resp=document.getElementById("responsavel").value;
-
-  const eq=equipamentos.find(e=>e.patrimonio==pat);
-  if(!eq){ alert("Equipamento não encontrado"); return; }
-
-  try{
-    await updateDoc(doc(db,"equipamentos",eq.id),{loja:dest});
-    const mov={
-      tipo:"Transferência",
-      patrimonio:eq.patrimonio,
-      origem:eq.loja,
-      destino:dest,
-      status:"Em transporte",
-      responsavel:resp,
-      data:new Date().toLocaleString()
-    }
-    await addDoc(collection(db,"movimentacoes"),mov);
-    carregarEquipamentos();
-    carregarMov();
-  }catch(error){ alert("Erro na transferência: "+error.message);}
-}
-window.transferir=transferir;
-
-// === CARREGAR MOVIMENTAÇÕES ===
-async function carregarMov(){
-  const querySnapshot=await getDocs(collection(db,"movimentacoes"));
-  movimentacoes=[]; let html="";
-
-  querySnapshot.forEach(docSnap=>{
-    const m=docSnap.data();
-    movimentacoes.push({id:docSnap.id,...m});
-
-    html+=`<tr>
-      <td>${m.tipo}</td>
-      <td>${m.patrimonio}</td>
-      <td>${m.origem}</td>
-      <td>${m.destino}</td>
-      <td>${m.status}</td>
-      <td>${m.responsavel}</td>
-      <td>${m.data}</td>`;
-
-    if(userNivel==="admin"){
-      html+=`<td><button onclick="finalizarMov('${docSnap.id}')">Finalizar</button></td>`;
-    }else html+="<td></td>";
-
-    html+="</tr>";
-  });
-
-  document.getElementById("tabelaMov").innerHTML=html;
-  graficoDashboard();
-}
-
-// === FINALIZAR TRANSFERÊNCIA (Admin) ===
-async function finalizarMov(id){
-  await updateDoc(doc(db,"movimentacoes",id),{status:"Finalizado"});
-  carregarMov();
-}
-
-// === DASHBOARD ===
-function graficoDashboard(){
-  if(grafico) grafico.destroy();
-  grafico=new Chart(document.getElementById("grafico"),{
-    type:"bar",
-    data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}
-  });
-}
-
-// === EDITAR / EXCLUIR EQUIPAMENTOS (Admin) ===
-async function editarEquip(id){
-  const eq=equipamentos.find(e=>e.id===id);
-  const novoNome=prompt("Editar nome:", eq.nome);
-  if(novoNome) await updateDoc(doc(db,"equipamentos",id),{nome:novoNome});
-  carregarEquipamentos();
-}
-
-async function excluirEquip(id){
-  if(confirm("Deseja excluir este equipamento?")){
-    await updateDoc(doc(db,"equipamentos",id),{status:"Excluído"});
-    carregarEquipamentos();
-  }
-}
-
-</script>
-
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9;}
 header{background:#0f172a;color:white;padding:15px;font-size:20px;}
@@ -240,12 +26,12 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
     <h2>Sistema Inventário TI</h2>
     <input id="usuario" placeholder="E-mail">
     <input id="senha" type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
+    <button id="btnLogin">Entrar</button>
   </div>
 </div>
 
 <div id="app" style="display:none">
-<header>Inventário TI <button onclick="logout()" style="float:right">Sair</button></header>
+<header>Inventário TI <button id="btnLogout" style="float:right">Sair</button></header>
 <div class="container">
 
 <div class="card" id="cardCadastro">
@@ -257,7 +43,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 <select id="status">
 <option>Ativo</option><option>Estoque</option><option>Manutenção</option><option>Defeito</option>
 </select>
-<button onclick="salvarEquipamento()">Salvar</button>
+<button id="btnSalvar">Salvar</button>
 </div>
 
 <div class="card" id="cardEquipamentos">
@@ -275,7 +61,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 <input id="patTransfer" placeholder="Patrimônio">
 <input id="destino" placeholder="Destino">
 <input id="responsavel" placeholder="Responsável">
-<button onclick="transferir()">Transferir</button>
+<button id="btnTransferir">Transferir</button>
 </div>
 
 <div class="card" id="cardMovimentacoes">
@@ -296,5 +82,175 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 </div>
 </div>
 
+<!-- SCRIPT FINAL NO FINAL DO BODY -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import Chart from "https://cdn.jsdelivr.net/npm/chart.js/dist/chart.esm.js";
+
+// === FIREBASE CONFIG ===
+const firebaseConfig = {
+  apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+  authDomain: "romtech-e1e15.firebaseapp.com",
+  projectId: "romtech-e1e15",
+  storageBucket: "romtech-e1e15.appspot.com",
+  messagingSenderId: "153455301031",
+  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
+  measurementId: "G-1DBYYTTXM4"
+};
+
+const appFirebase = initializeApp(firebaseConfig);
+const db = getFirestore(appFirebase);
+const auth = getAuth(appFirebase);
+
+// === VARIÁVEIS GLOBAIS ===
+let equipamentos=[], movimentacoes=[], grafico;
+let userNivel="";
+
+// === FUNÇÕES ===
+
+// LOGIN
+async function login(){
+  const email = document.getElementById("usuario").value;
+  const senha = document.getElementById("senha").value;
+  if(!email || !senha){ alert("Informe e-mail e senha"); return; }
+  try{
+    await signInWithEmailAndPassword(auth, email, senha);
+    if(email==="admin@ultra.com") userNivel="admin";
+    else if(email==="acesso@ultra.com") userNivel="supervisor";
+    else if(email==="loja@ultra.com") userNivel="loja";
+    else userNivel="supervisor";
+    configurarInterface(userNivel);
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    carregarEquipamentos();
+    carregarMov();
+  }catch(error){
+    alert("Erro ao autenticar: "+error.message);
+  }
+}
+
+// LOGOUT
+function logout(){ auth.signOut().then(()=>location.reload()); }
+
+// CONFIGURA INTERFACE
+function configurarInterface(nivel){
+  if(nivel==="admin") return;
+  if(nivel==="supervisor"){
+    document.getElementById("cardCadastro").style.display="none";
+    document.getElementById("cardTransferencia").style.display="none";
+    document.getElementById("cardDashboard").style.display="none";
+  }
+  if(nivel==="loja"){
+    document.getElementById("cardCadastro").style.display="none";
+    document.getElementById("cardEquipamentos").style.display="none";
+    document.getElementById("cardDashboard").style.display="none";
+  }
+}
+
+// SALVAR EQUIPAMENTO (Admin)
+async function salvarEquipamento(){
+  const p=document.getElementById("patrimonio").value;
+  const n=document.getElementById("nome").value;
+  const q=parseInt(document.getElementById("quantidade").value);
+  const l=document.getElementById("loja").value;
+  const s=document.getElementById("status").value;
+  if(!p || !n){ alert("Preencha os campos"); return; }
+  await addDoc(collection(db,"equipamentos"),{patrimonio:p,nome:n,quantidade:q,loja:l,status:s});
+  document.getElementById("patrimonio").value=""; document.getElementById("nome").value=""; document.getElementById("loja").value="";
+  carregarEquipamentos();
+}
+
+// CARREGAR EQUIPAMENTOS
+async function carregarEquipamentos(){
+  const querySnapshot = await getDocs(collection(db,"equipamentos"));
+  equipamentos=[]; let html="";
+  querySnapshot.forEach(docSnap=>{
+    const e=docSnap.data();
+    equipamentos.push({id:docSnap.id,...e});
+    html+=`<tr>
+      <td>${e.patrimonio}</td>
+      <td>${e.nome}</td>
+      <td>${e.quantidade}</td>
+      <td>${e.loja}</td>
+      <td>${e.status}</td>`;
+    if(userNivel==="admin"){
+      html+=`<td><button onclick="editarEquip('${docSnap.id}')">Editar</button> <button onclick="excluirEquip('${docSnap.id}')">Excluir</button></td>`;
+    }else html+="<td></td>";
+    html+="</tr>";
+  });
+  document.getElementById("tabelaEquip").innerHTML=html;
+}
+
+// TRANSFERÊNCIA
+async function transferir(){
+  const pat=document.getElementById("patTransfer").value;
+  const dest=document.getElementById("destino").value;
+  const resp=document.getElementById("responsavel").value;
+  const eq=equipamentos.find(e=>e.patrimonio==pat);
+  if(!eq){ alert("Equipamento não encontrado"); return; }
+  await updateDoc(doc(db,"equipamentos",eq.id),{loja:dest});
+  await addDoc(collection(db,"movimentacoes"),{
+    tipo:"Transferência", patrimonio:eq.patrimonio, origem:eq.loja,
+    destino:dest, status:"Em transporte", responsavel:resp, data:new Date().toLocaleString()
+  });
+  carregarEquipamentos();
+  carregarMov();
+}
+
+// CARREGAR MOVIMENTAÇÕES
+async function carregarMov(){
+  const querySnapshot=await getDocs(collection(db,"movimentacoes"));
+  movimentacoes=[]; let html="";
+  querySnapshot.forEach(docSnap=>{
+    const m=docSnap.data();
+    movimentacoes.push({id:docSnap.id,...m});
+    html+=`<tr>
+      <td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td>
+      <td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td>
+      <td>${m.data}</td>`;
+    if(userNivel==="admin") html+=`<td><button onclick="finalizarMov('${docSnap.id}')">Finalizar</button></td>`;
+    else html+="<td></td>";
+    html+="</tr>";
+  });
+  document.getElementById("tabelaMov").innerHTML=html;
+  graficoDashboard();
+}
+
+// FINALIZAR MOVIMENTAÇÃO (Admin)
+async function finalizarMov(id){ await updateDoc(doc(db,"movimentacoes",id),{status:"Finalizado"}); carregarMov(); }
+
+// DASHBOARD
+function graficoDashboard(){
+  if(grafico) grafico.destroy();
+  grafico=new Chart(document.getElementById("grafico"),{type:"bar",data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}});
+}
+
+// EDITAR / EXCLUIR (Admin)
+async function editarEquip(id){
+  const eq=equipamentos.find(e=>e.id===id);
+  const novo=prompt("Editar nome:", eq.nome);
+  if(novo) await updateDoc(doc(db,"equipamentos",id),{nome:novo});
+  carregarEquipamentos();
+}
+async function excluirEquip(id){
+  if(confirm("Deseja excluir este equipamento?")) await updateDoc(doc(db,"equipamentos",id),{status:"Excluído"});
+  carregarEquipamentos();
+}
+
+// === ADICIONAR EVENTOS AOS BOTÕES ===
+document.getElementById("btnLogin").addEventListener("click", login);
+document.getElementById("btnLogout").addEventListener("click", logout);
+document.getElementById("btnSalvar").addEventListener("click", salvarEquipamento);
+document.getElementById("btnTransferir").addEventListener("click", transferir);
+
+// Tornar funções globais para os botões dentro da tabela
+window.editarEquip = editarEquip;
+window.excluirEquip = excluirEquip;
+window.finalizarMov = finalizarMov;
+
+</script>
 </body>
 </html>
