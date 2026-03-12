@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventário TI - Romtech</title>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { Chart } from "https://cdn.jsdelivr.net/npm/chart.js";
 
-// CONFIGURAÇÃO FIREBASE
+// === CONFIGURAÇÃO FIREBASE ===
 const firebaseConfig = {
   apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
   authDomain: "romtech-e1e15.firebaseapp.com",
@@ -24,16 +26,19 @@ const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 const auth = getAuth(appFirebase);
 
+// === VARIÁVEIS GLOBAIS ===
 let equipamentos=[], movimentacoes=[], grafico;
 let userNivel="";
 
+// === ELEMENTOS DOM ===
 const loginDiv=document.getElementById("login");
 const appDiv=document.getElementById("app");
 
-// LOGIN REAL FIREBASE AUTH
+// === LOGIN FIREBASE AUTH ===
 async function login(){
   const email = document.getElementById("usuario").value;
   const senha = document.getElementById("senha").value;
+
   if(!email || !senha){ alert("Informe e-mail e senha"); return; }
 
   try{
@@ -43,7 +48,7 @@ async function login(){
     if(email==="admin@ultra.com") userNivel="admin";
     else if(email==="acesso@ultra.com") userNivel="supervisor";
     else if(email==="loja@ultra.com") userNivel="loja";
-    else userNivel="supervisor";
+    else userNivel="supervisor"; // padrão
 
     configurarInterface(userNivel);
     loginDiv.style.display="none";
@@ -58,13 +63,13 @@ async function login(){
 }
 window.login=login;
 
-// LOGOUT
+// === LOGOUT ===
 function logout(){
   auth.signOut().then(()=>{ location.reload(); });
 }
 window.logout=logout;
 
-// CONFIGURAÇÃO DA INTERFACE POR NÍVEL
+// === CONFIGURA INTERFACE POR NÍVEL ===
 function configurarInterface(nivel){
   if(nivel==="admin") return;
   if(nivel==="supervisor"){
@@ -79,7 +84,7 @@ function configurarInterface(nivel){
   }
 }
 
-// SALVAR EQUIPAMENTO (Admin)
+// === SALVAR EQUIPAMENTO (Admin) ===
 async function salvarEquipamento(){
   const patrimonio=document.getElementById("patrimonio").value;
   const nome=document.getElementById("nome").value;
@@ -99,7 +104,7 @@ async function salvarEquipamento(){
 }
 window.salvarEquipamento=salvarEquipamento;
 
-// CARREGAR EQUIPAMENTOS
+// === CARREGAR EQUIPAMENTOS ===
 async function carregarEquipamentos(){
   const querySnapshot = await getDocs(collection(db,"equipamentos"));
   equipamentos=[]; let html="";
@@ -125,7 +130,7 @@ async function carregarEquipamentos(){
   document.getElementById("tabelaEquip").innerHTML=html;
 }
 
-// TRANSFERÊNCIA (Admin + Loja)
+// === TRANSFERÊNCIA (Admin + Loja) ===
 async function transferir(){
   const pat=document.getElementById("patTransfer").value;
   const dest=document.getElementById("destino").value;
@@ -152,7 +157,7 @@ async function transferir(){
 }
 window.transferir=transferir;
 
-// CARREGAR MOVIMENTAÇÕES
+// === CARREGAR MOVIMENTAÇÕES ===
 async function carregarMov(){
   const querySnapshot=await getDocs(collection(db,"movimentacoes"));
   movimentacoes=[]; let html="";
@@ -181,13 +186,13 @@ async function carregarMov(){
   graficoDashboard();
 }
 
-// FINALIZAR TRANSFERÊNCIA (Admin)
+// === FINALIZAR TRANSFERÊNCIA (Admin) ===
 async function finalizarMov(id){
   await updateDoc(doc(db,"movimentacoes",id),{status:"Finalizado"});
   carregarMov();
 }
 
-// DASHBOARD
+// === DASHBOARD ===
 function graficoDashboard(){
   if(grafico) grafico.destroy();
   grafico=new Chart(document.getElementById("grafico"),{
@@ -196,7 +201,7 @@ function graficoDashboard(){
   });
 }
 
-// EDITAR / EXCLUIR (Admin)
+// === EDITAR / EXCLUIR EQUIPAMENTOS (Admin) ===
 async function editarEquip(id){
   const eq=equipamentos.find(e=>e.id===id);
   const novoNome=prompt("Editar nome:", eq.nome);
@@ -227,7 +232,9 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 #loginBox{background:#1e293b;padding:40px;border-radius:10px;}
 </style>
 
+</head>
 <body>
+
 <div id="login">
   <div id="loginBox">
     <h2>Sistema Inventário TI</h2>
@@ -238,7 +245,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 </div>
 
 <div id="app" style="display:none">
-<header>Inventário TI<button onclick="logout()" style="float:right">Sair</button></header>
+<header>Inventário TI <button onclick="logout()" style="float:right">Sair</button></header>
 <div class="container">
 
 <div class="card" id="cardCadastro">
@@ -288,7 +295,6 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 
 </div>
 </div>
+
 </body>
 </html>
-
-
