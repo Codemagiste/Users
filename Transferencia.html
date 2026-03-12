@@ -1,33 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-
 <meta charset="UTF-8">
-<title>Sistema Inventário TI</title>
+<title>Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 
 body{
 font-family:Arial;
 margin:0;
-background:#f4f6f9;
+background:#f1f5f9;
 }
 
 header{
-background:#1f2937;
+background:#0f172a;
 color:white;
 padding:15px;
 font-size:20px;
-}
-
-header button{
-margin-left:5px;
 }
 
 .container{
@@ -55,7 +47,6 @@ table{
 width:100%;
 border-collapse:collapse;
 background:white;
-margin-top:10px;
 }
 
 th,td{
@@ -71,43 +62,32 @@ border-radius:8px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-.msg-sucesso{
-display:none;
-background:#16a34a;
-color:white;
-padding:10px;
-border-radius:6px;
-margin-top:10px;
-}
-
-#loginTela{
+#login{
 display:flex;
 height:100vh;
 align-items:center;
 justify-content:center;
-background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),
-url("https://images.unsplash.com/photo-1518770660439-4636190af475");
-background-size:cover;
+background:#0f172a;
+color:white;
 }
 
 #loginBox{
-background:white;
-padding:30px;
+background:#1e293b;
+padding:40px;
 border-radius:10px;
-box-shadow:0 5px 20px rgba(0,0,0,0.3);
 }
 
 </style>
+
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<div id="login">
 
-<div id="loginTela">
 <div id="loginBox">
 
-<h2>Login Sistema TI</h2>
+<h2>Sistema Inventário TI</h2>
 
 <input id="usuario" placeholder="Usuário"><br>
 <input id="senha" type="password" placeholder="Senha"><br>
@@ -117,36 +97,17 @@ box-shadow:0 5px 20px rgba(0,0,0,0.3);
 </div>
 </div>
 
-<!-- ENTREGA QR -->
-
-<div id="entregaTela" style="display:none;padding:40px">
-
-<h2>Confirmar Entrega</h2>
-
-<div id="dadosEntrega"></div>
-
-<button onclick="confirmarEntrega()">Confirmar Entrega</button>
-
-</div>
-
 <div id="app" style="display:none">
 
 <header>
 
-Sistema Inventário TI
+Inventário TI
 
-<span style="float:right">
-<button onclick="inicio()">Início</button>
-<button onclick="logout()">Sair</button>
-</span>
+<button onclick="logout()" style="float:right">Sair</button>
 
 </header>
 
 <div class="container">
-
-<!-- ADMIN -->
-
-<div id="admin" style="display:none">
 
 <div class="card">
 
@@ -155,15 +116,16 @@ Sistema Inventário TI
 <input id="patrimonio" placeholder="Patrimônio">
 <input id="nome" placeholder="Equipamento">
 <input id="quantidade" type="number" value="1">
-<input id="lojaEnvio" placeholder="Loja">
+<input id="loja" placeholder="Loja">
 
 <select id="status">
 <option>Ativo</option>
-<option>Manutenção</option>
 <option>Estoque</option>
+<option>Manutenção</option>
+<option>Defeito</option>
 </select>
 
-<button onclick="salvar()">Salvar</button>
+<button onclick="salvarEquipamento()">Salvar</button>
 
 </div>
 
@@ -172,7 +134,9 @@ Sistema Inventário TI
 <h3>Equipamentos</h3>
 
 <table>
+
 <thead>
+
 <tr>
 <th>Patrimônio</th>
 <th>Equipamento</th>
@@ -180,9 +144,24 @@ Sistema Inventário TI
 <th>Loja</th>
 <th>Status</th>
 </tr>
+
 </thead>
-<tbody id="tabela"></tbody>
+
+<tbody id="tabelaEquip"></tbody>
+
 </table>
+
+</div>
+
+<div class="card">
+
+<h3>Transferência</h3>
+
+<input id="patTransfer" placeholder="Patrimônio">
+<input id="destino" placeholder="Destino">
+<input id="responsavel" placeholder="Responsável">
+
+<button onclick="transferir()">Transferir</button>
 
 </div>
 
@@ -190,394 +169,238 @@ Sistema Inventário TI
 
 <h3>Movimentações</h3>
 
-<button onclick="exportarPDF()">Exportar PDF</button>
-
 <table>
+
 <thead>
+
 <tr>
-<th>ID</th>
 <th>Tipo</th>
 <th>Patrimônio</th>
-<th>Equipamento</th>
 <th>Origem</th>
 <th>Destino</th>
 <th>Status</th>
 <th>Responsável</th>
 <th>Data</th>
 </tr>
+
 </thead>
 
 <tbody id="tabelaMov"></tbody>
+
 </table>
 
 </div>
 
 <div class="card">
-<h3>Gráfico Movimentações</h3>
-<canvas id="graficoMov"></canvas>
-</div>
 
-</div>
+<h3>Dashboard</h3>
 
-<!-- TECNICO -->
-
-<div id="tecnico" style="display:none">
-
-<div class="card">
-<h3>Painel Técnico</h3>
-
-<table>
-<thead>
-<tr>
-<th>Patrimônio</th>
-<th>Equipamento</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="tabelaTecnico"></tbody>
-</table>
-
-</div>
-
-</div>
-
-<!-- LOJA -->
-
-<div id="loja" style="display:none">
-
-<div class="card">
-
-<h3>Transferência</h3>
-
-<input id="patTransfer" placeholder="Patrimônio">
-<input id="destinoTransfer" placeholder="Loja destino">
-<input id="respTransfer" placeholder="Responsável">
-
-<button onclick="transferenciaManual()">Transferir</button>
-
-<div id="msgSucesso" class="msg-sucesso">
-Transferência realizada com sucesso
-</div>
-
-</div>
+<canvas id="grafico"></canvas>
 
 </div>
 
 </div>
 </div>
 
-<script>
+<script type="module">
 
-let equipamentos = JSON.parse(localStorage.getItem("equipamentos") || "[]")
-let movimentacoes = JSON.parse(localStorage.getItem("movimentacoes") || "[]")
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 
-let graficoMov
-let entregaID=null
-
-const usuarios=[
-{usuario:"admin",senha:"123",tipo:"admin"},
-{usuario:"tecnico",senha:"123",tipo:"tecnico"},
-{usuario:"loja",senha:"123",tipo:"loja"}
-]
-
-const params = new URLSearchParams(window.location.search)
-entregaID = params.get("id")
-
-if(entregaID){
-
-loginTela.style.display="none"
-app.style.display="none"
-entregaTela.style.display="block"
-
-carregarEntrega(entregaID)
-
+import {
+getFirestore,
+collection,
+addDoc,
+getDocs,
+updateDoc,
+doc
 }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "SUA_API_KEY",
+authDomain: "SEU_PROJETO.firebaseapp.com",
+projectId: "SEU_PROJETO",
+storageBucket: "SEU_PROJETO.appspot.com",
+messagingSenderId: "XXXX",
+appId: "XXXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let equipamentos=[]
+let movimentacoes=[]
+let grafico
 
 function login(){
 
-let u=usuario.value
-let s=senha.value
-
-let ok=usuarios.find(x=>x.usuario===u && x.senha===s)
-
-if(!ok){
-alert("Login inválido")
-return
-}
-
-tipoUsuario=ok.tipo
-
-loginTela.style.display="none"
+login.style.display="none"
 app.style.display="block"
 
-inicio()
-
-render()
-renderTecnico()
-renderMov()
-grafico()
+carregarEquipamentos()
+carregarMov()
 
 }
 
-function inicio(){
-
-admin.style.display="none"
-tecnico.style.display="none"
-loja.style.display="none"
-
-if(tipoUsuario==="admin") admin.style.display="block"
-if(tipoUsuario==="tecnico") tecnico.style.display="block"
-if(tipoUsuario==="loja") loja.style.display="block"
-
-}
+window.login=login
 
 function logout(){
-
 location.reload()
-
 }
 
-function salvar(){
+window.logout=logout
 
-const eq={
+async function salvarEquipamento(){
+
+await addDoc(collection(db,"equipamentos"),{
+
 patrimonio:patrimonio.value,
 nome:nome.value,
 quantidade:parseInt(quantidade.value),
-lojaEnvio:lojaEnvio.value,
+loja:loja.value,
 status:status.value
-}
 
-equipamentos.push(eq)
+})
 
-localStorage.setItem("equipamentos",JSON.stringify(equipamentos))
-
-render()
+carregarEquipamentos()
 
 }
 
-function render(){
+window.salvarEquipamento=salvarEquipamento
+
+async function carregarEquipamentos(){
+
+const querySnapshot = await getDocs(collection(db,"equipamentos"))
+
+equipamentos=[]
 
 let html=""
 
-equipamentos.forEach(e=>{
+querySnapshot.forEach((doc)=>{
+
+const e=doc.data()
+
+equipamentos.push(e)
 
 html+=`
+
 <tr>
 <td>${e.patrimonio}</td>
 <td>${e.nome}</td>
 <td>${e.quantidade}</td>
-<td>${e.lojaEnvio}</td>
+<td>${e.loja}</td>
 <td>${e.status}</td>
 </tr>
+
 `
 
 })
 
-tabela.innerHTML=html
+tabelaEquip.innerHTML=html
 
 }
 
-function renderTecnico(){
-
-let html=""
-
-equipamentos.forEach(e=>{
-
-html+=`
-<tr>
-<td>${e.patrimonio}</td>
-<td>${e.nome}</td>
-<td>${e.status}</td>
-</tr>
-`
-
-})
-
-tabelaTecnico.innerHTML=html
-
-}
-
-function transferenciaManual(){
+async function transferir(){
 
 const pat=patTransfer.value
-const destino=destinoTransfer.value
-const responsavel=respTransfer.value
+const dest=destino.value
+const resp=responsavel.value
 
-const eq=equipamentos.find(e=>e.patrimonio===pat)
+const eq=equipamentos.find(e=>e.patrimonio==pat)
 
 if(!eq){
+
 alert("Equipamento não encontrado")
 return
+
 }
-
-const origem=eq.lojaEnvio
-const id=Date.now()
-
-eq.lojaEnvio=destino
 
 const mov={
-id:id,
+
 tipo:"Transferência",
 patrimonio:eq.patrimonio,
-nome:eq.nome,
-origem:origem,
-destino:destino,
-responsavel:responsavel,
+origem:eq.loja,
+destino:dest,
 status:"Em transporte",
+responsavel:resp,
 data:new Date().toLocaleString()
-}
-
-movimentacoes.push(mov)
-
-localStorage.setItem("movimentacoes",JSON.stringify(movimentacoes))
-localStorage.setItem("equipamentos",JSON.stringify(equipamentos))
-
-render()
-renderMov()
-grafico()
-
-gerarCupom(mov)
-
-patTransfer.value=""
-destinoTransfer.value=""
-respTransfer.value=""
-
-msgSucesso.style.display="block"
-
-setTimeout(()=>{
-msgSucesso.style.display="none"
-},3000)
 
 }
 
-function gerarCupom(mov){
+await addDoc(collection(db,"movimentacoes"),mov)
 
-const link = window.location.origin + window.location.pathname + "?id="+mov.id
+eq.loja=dest
 
-QRCode.toDataURL(link,function(err,url){
-
-let texto=`
-
-TRANSFERÊNCIA TI
-
-Patrimônio: ${mov.patrimonio}
-Equipamento: ${mov.nome}
-
-Origem: ${mov.origem}
-Destino: ${mov.destino}
-
-Responsável: ${mov.responsavel}
-
-Escaneie para confirmar entrega
-`
-
-const w=window.open("","","width=300,height=500")
-
-w.document.write(texto+"<br><img src='"+url+"'>")
-
-w.print()
-
-})
+carregarMov()
+carregarEquipamentos()
 
 }
 
-function renderMov(){
+window.transferir=transferir
+
+async function carregarMov(){
+
+const querySnapshot = await getDocs(collection(db,"movimentacoes"))
 
 let html=""
 
-movimentacoes.slice().reverse().forEach(m=>{
+movimentacoes=[]
+
+querySnapshot.forEach((doc)=>{
+
+const m=doc.data()
+
+movimentacoes.push(m)
 
 html+=`
+
 <tr>
-<td>${m.id}</td>
 <td>${m.tipo}</td>
 <td>${m.patrimonio}</td>
-<td>${m.nome}</td>
 <td>${m.origem}</td>
 <td>${m.destino}</td>
 <td>${m.status}</td>
 <td>${m.responsavel}</td>
 <td>${m.data}</td>
 </tr>
+
 `
 
 })
 
 tabelaMov.innerHTML=html
 
+graficoDashboard()
+
 }
 
-function grafico(){
+function graficoDashboard(){
 
-let trans=movimentacoes.length
+if(grafico)grafico.destroy()
 
-if(graficoMov)graficoMov.destroy()
+grafico=new Chart(
 
-graficoMov=new Chart(document.getElementById("graficoMov"),{
+document.getElementById("grafico"),
 
+{
 type:"bar",
 
 data:{
-labels:["Transferências"],
+
+labels:["Movimentações"],
+
 datasets:[{
-label:"Movimentações",
-data:[trans]
+
+label:"Total",
+data:[movimentacoes.length]
+
 }]
+
 }
 
 })
 
 }
-
-function carregarEntrega(id){
-
-let mov = movimentacoes.find(m=>m.id==id)
-
-if(!mov){
-dadosEntrega.innerHTML="Transferência não encontrada"
-return
-}
-
-dadosEntrega.innerHTML=`
-Patrimônio: ${mov.patrimonio}<br>
-Equipamento: ${mov.nome}<br>
-Origem: ${mov.origem}<br>
-Destino: ${mov.destino}<br>
-Status: ${mov.status}
-`
-
-}
-
-function confirmarEntrega(){
-
-let mov = movimentacoes.find(m=>m.id==entregaID)
-
-mov.status="Entregue"
-
-localStorage.setItem("movimentacoes",JSON.stringify(movimentacoes))
-
-alert("Entrega confirmada")
-
-location.href=window.location.pathname
-
-}
-
-document.addEventListener("DOMContentLoaded",function(){
-
-usuario.addEventListener("keypress",e=>{
-if(e.key==="Enter") login()
-})
-
-senha.addEventListener("keypress",e=>{
-if(e.key==="Enter") login()
-})
-
-patTransfer.addEventListener("keypress",e=>{
-if(e.key==="Enter") transferenciaManual()
-})
-
-})
 
 </script>
 
