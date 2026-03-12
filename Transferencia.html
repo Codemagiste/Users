@@ -1,4 +1,480 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<meta charset="UTF-8">
+<title>Sistema Patrimônio TI</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#eef2f7;
+}
+
+header{
+background:#1e293b;
+color:white;
+padding:15px;
+}
+
+.container{
+padding:20px;
+}
+
+input,button{
+padding:8px;
+margin:5px;
+}
+
+button{
+background:#2563eb;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+#loginTela{
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+background:#111;
+}
+
+#loginBox{
+background:white;
+padding:30px;
+border-radius:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginTela">
+
+<div id="loginBox">
+
+<h2>Login</h2>
+
+<input id="user" placeholder="Email"><br>
+<input id="pass" type="password" placeholder="Senha"><br>
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+</div>
+
+<!-- SISTEMA -->
+
+<div id="app" style="display:none">
+
+<header>
+
+Sistema Patrimônio TI
+
+<button onclick="logout()" style="float:right">Sair</button>
+
+</header>
+
+<div class="container">
+
+<h3>Cadastrar Equipamento</h3>
+
+<input id="pat" placeholder="Patrimônio">
+<input id="nome" placeholder="Equipamento">
+<input id="loja" placeholder="Loja">
+
+<button onclick="salvarEquipamento()">Salvar</button>
+
+<h3>Equipamentos</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Patrimônio</th>
+<th>Equipamento</th>
+<th>Loja</th>
+</tr>
+</thead>
+
+<tbody id="tabelaEquip"></tbody>
+
+</table>
+
+<h3>Transferência</h3>
+
+<input id="patTransfer" placeholder="Patrimônio">
+
+<input id="destinoTransfer" placeholder="Destino">
+
+<input id="responsavel" placeholder="Responsável">
+
+<button onclick="transferir()">Transferir</button>
+
+<h3>Movimentações</h3>
+
+<button onclick="exportarPDF()">Exportar PDF</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Patrimônio</th>
+<th>Origem</th>
+<th>Destino</th>
+<th>Status</th>
+<th>Data</th>
+</tr>
+</thead>
+
+<tbody id="tabelaMov"></tbody>
+
+</table>
+
+<h3>Gráfico</h3>
+
+<canvas id="grafico"></canvas>
+
+</div>
+
+</div>
+
+<script type="module">
+
+/* FIREBASE */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import { 
+getFirestore,
+collection,
+addDoc,
+onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+authDomain: "romtech-e1e15.firebaseapp.com",
+projectId: "romtech-e1e15",
+storageBucket: "romtech-e1e15.firebasestorage.app",
+messagingSenderId: "153455301031",
+appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
+measurementId: "G-1DBYYTTXM4"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const auth = getAuth(app);
+
+/* LOGIN */
+
+window.login = async function(){
+
+let email = document.getElementById("user").value;
+let senha = document.getElementById("pass").value;
+
+try{
+
+await signInWithEmailAndPassword(auth,email,senha);
+
+}catch(e){
+
+alert("Usuário ou senha inválidos");
+
+}
+
+}
+
+window.logout = function(){
+
+signOut(auth);
+
+}
+
+/* CONTROLE DE SESSÃO */
+
+onAuthStateChanged(auth,(user)=>{
+
+if(user){
+
+loginTela.style.display="none";
+app.style.display="block";
+
+carregarEquipamentos();
+carregarMovimentacoes();
+
+}else{
+
+loginTela.style.display="flex";
+app.style.display="none";
+
+}
+
+});
+
+/* EQUIPAMENTOS */
+
+window.salvarEquipamento = async function(){
+
+await addDoc(collection(db,"equipamentos"),{
+
+patrimonio:pat.value,
+nome:nome.value,
+loja:loja.value
+
+});
+
+pat.value="";
+nome.value="";
+loja.value="";
+
+}
+
+/* LISTAR EQUIPAMENTOS */
+
+let equipamentos=[];
+
+function carregarEquipamentos(){
+
+onSnapshot(collection(db,"equipamentos"),snapshot=>{
+
+equipamentos=[];
+
+snapshot.forEach(doc=>{
+
+equipamentos.push(doc.data());
+
+});
+
+renderEquip();
+
+});
+
+}
+
+function renderEquip(){
+
+let html="";
+
+equipamentos.forEach(e=>{
+
+html+=`
+<tr>
+<td>${e.patrimonio}</td>
+<td>${e.nome}</td>
+<td>${e.loja}</td>
+</tr>
+`;
+
+});
+
+tabelaEquip.innerHTML=html;
+
+}
+
+/* TRANSFERÊNCIA */
+
+window.transferir = async function(){
+
+let eq = equipamentos.find(e=>e.patrimonio==patTransfer.value);
+
+if(!eq){
+
+alert("Equipamento não encontrado");
+return;
+
+}
+
+let mov = {
+
+patrimonio:eq.patrimonio,
+origem:eq.loja,
+destino:destinoTransfer.value,
+responsavel:responsavel.value,
+status:"Em transporte",
+data:new Date().toLocaleString()
+
+};
+
+await addDoc(collection(db,"movimentacoes"),mov);
+
+gerarCupom(mov);
+
+}
+
+/* QR CODE */
+
+function gerarCupom(m){
+
+let texto=`
+Patrimônio: ${m.patrimonio}
+Origem: ${m.origem}
+Destino: ${m.destino}
+`;
+
+QRCode.toDataURL(texto,function(err,url){
+
+let w=window.open("","","width=300,height=400");
+
+w.document.write("<h3>Transferência TI</h3>");
+
+w.document.write("<pre>"+texto+"</pre>");
+
+w.document.write(`<img src="${url}">`);
+
+w.print();
+
+});
+
+}
+
+/* MOVIMENTAÇÕES */
+
+let movimentacoes=[];
+
+function carregarMovimentacoes(){
+
+onSnapshot(collection(db,"movimentacoes"),snapshot=>{
+
+movimentacoes=[];
+
+snapshot.forEach(doc=>{
+
+movimentacoes.push(doc.data());
+
+});
+
+renderMov();
+grafico();
+
+});
+
+}
+
+function renderMov(){
+
+let html="";
+
+movimentacoes.forEach(m=>{
+
+html+=`
+<tr>
+<td>${m.patrimonio}</td>
+<td>${m.origem}</td>
+<td>${m.destino}</td>
+<td>${m.status}</td>
+<td>${m.data}</td>
+</tr>
+`;
+
+});
+
+tabelaMov.innerHTML=html;
+
+}
+
+/* GRÁFICO */
+
+let chart;
+
+function grafico(){
+
+let total = movimentacoes.length;
+
+let transporte = movimentacoes.filter(m=>m.status=="Em transporte").length;
+
+if(chart) chart.destroy();
+
+chart = new Chart(grafico,{
+
+type:"bar",
+
+data:{
+
+labels:["Total","Em transporte"],
+
+datasets:[{
+
+data:[total,transporte]
+
+}]
+
+}
+
+});
+
+}
+
+/* PDF */
+
+window.exportarPDF = function(){
+
+const { jsPDF } = window.jspdf;
+
+let docPDF = new jsPDF();
+
+let y=10;
+
+movimentacoes.forEach(m=>{
+
+docPDF.text(
+
+`${m.patrimonio} ${m.origem} -> ${m.destino}`,
+
+10,y
+
+);
+
+y+=10;
+
+});
+
+docPDF.save("movimentacoes.pdf");
+
+}
+
+</script>
+
+</body>
+</html>
 <html lang="pt-br">
 <head>
 
@@ -413,3 +889,4 @@ docPDF.save("movimentacoes.pdf")
 
 </body>
 </html>
+
