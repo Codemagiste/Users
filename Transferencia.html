@@ -2,9 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Inventário TI</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Sistema Transferência TI</title>
 
 <style>
 
@@ -32,9 +30,9 @@ border-radius:8px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-input,select,button{
+input,button{
 padding:8px;
-margin:4px;
+margin:5px;
 }
 
 button{
@@ -71,6 +69,7 @@ border-radius:10px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -79,9 +78,9 @@ border-radius:10px;
 
 <div id="loginBox">
 
-<h2>Inventário TI</h2>
+<h2>Sistema Transferência</h2>
 
-<input id="usuario" placeholder="Email"><br>
+<input id="email" placeholder="Email"><br>
 <input id="senha" type="password" placeholder="Senha"><br>
 
 <button onclick="login()">Entrar</button>
@@ -93,7 +92,7 @@ border-radius:10px;
 
 <header>
 
-Sistema Inventário TI
+Sistema Transferência TI
 
 <button onclick="logout()" style="float:right">Sair</button>
 
@@ -107,15 +106,7 @@ Sistema Inventário TI
 
 <input id="patrimonio" placeholder="Patrimônio">
 <input id="nome" placeholder="Equipamento">
-<input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
-
-<select id="status">
-<option>Ativo</option>
-<option>Estoque</option>
-<option>Manutenção</option>
-<option>Defeito</option>
-</select>
 
 <button onclick="salvarEquipamento()">Salvar</button>
 
@@ -143,7 +134,6 @@ Sistema Inventário TI
 <tr>
 <th>Tipo</th>
 <th>Patrimônio</th>
-<th>Origem</th>
 <th>Destino</th>
 <th>Status</th>
 <th>Responsável</th>
@@ -152,17 +142,9 @@ Sistema Inventário TI
 </tr>
 </thead>
 
-<tbody id="tabelaMov"></tbody>
+<tbody id="tabela"></tbody>
 
 </table>
-
-</div>
-
-<div class="card">
-
-<h3>Dashboard</h3>
-
-<canvas id="grafico"></canvas>
 
 </div>
 
@@ -173,6 +155,13 @@ Sistema Inventário TI
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+import { 
+getAuth,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
 getFirestore,
 collection,
@@ -180,248 +169,214 @@ addDoc,
 getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-getAuth,
-signInWithEmailAndPassword,
-signOut,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 const firebaseConfig = {
-  apiKey: "AIzaSyB01Ht6TLmpMc3xhN5euPZo5ecC4RJtfJrJu8",
-  authDomain: "romtech-e1e15.firebaseapp.com",
-  projectId: "romtech-e1e15",
-  storageBucket: "romtech-e1e15.firebasestorage.app",
-  messagingSenderId: "153455301031",
-  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
-  measurementId: "G-1DBYYTTXM4"
+apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+authDomain: "romtech-e1e15.firebaseapp.com",
+projectId: "romtech-e1e15",
+storageBucket: "romtech-e1e15.firebasestorage.app",
+messagingSenderId: "153455301031",
+appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
+measurementId: "G-1DBYYTTXM4"
 };
 
-const appFirebase=initializeApp(firebaseConfig)
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const db=getFirestore(appFirebase)
+let perfil="";
 
-const auth=getAuth(appFirebase)
-
-let perfil=""
-let movimentacoes=[]
-let grafico
-
-const loginDiv=document.getElementById("login")
-const appDiv=document.getElementById("app")
+const loginDiv=document.getElementById("login");
+const appDiv=document.getElementById("app");
 
 async function login(){
 
-const email=document.getElementById("usuario").value
-const senha=document.getElementById("senha").value
+const email=document.getElementById("email").value;
+const senha=document.getElementById("senha").value;
 
 try{
 
-await signInWithEmailAndPassword(auth,email,senha)
+await signInWithEmailAndPassword(auth,email,senha);
 
 }catch(error){
 
-alert(error.message)
+alert(error.message);
 
 }
 
 }
 
-window.login=login
+window.login=login;
 
 function logout(){
 
-signOut(auth)
+signOut(auth);
 
 }
 
-window.logout=logout
+window.logout=logout;
 
 onAuthStateChanged(auth,(user)=>{
 
 if(user){
 
-loginDiv.style.display="none"
-appDiv.style.display="block"
+loginDiv.style.display="none";
+appDiv.style.display="block";
 
-const email=user.email
+const email=user.email;
 
 if(email==="admin@ultra.com"){
-perfil="admin"
-mostrarAdmin()
+perfil="admin";
+mostrarAdmin();
 }
 
 if(email==="loja@ultra.com"){
-perfil="loja"
-mostrarLoja()
+perfil="loja";
+mostrarLoja();
 }
 
 if(email==="acesso@ultra.com"){
-perfil="acesso"
-mostrarAcesso()
+perfil="acesso";
+mostrarAcesso();
 }
 
-carregarMov()
+carregarMov();
 
 }else{
 
-loginDiv.style.display="flex"
-appDiv.style.display="none"
+loginDiv.style.display="flex";
+appDiv.style.display="none";
 
 }
 
-})
+});
 
 function mostrarAdmin(){
 
-document.getElementById("cardCadastro").style.display="block"
-document.getElementById("cardTransferencia").style.display="block"
-document.getElementById("cardMov").style.display="block"
+document.getElementById("cardCadastro").style.display="block";
+document.getElementById("cardTransferencia").style.display="block";
+document.getElementById("cardMov").style.display="block";
 
 }
 
 function mostrarLoja(){
 
-document.getElementById("cardCadastro").style.display="none"
-document.getElementById("cardTransferencia").style.display="block"
-document.getElementById("cardMov").style.display="none"
+document.getElementById("cardCadastro").style.display="none";
+document.getElementById("cardTransferencia").style.display="block";
+document.getElementById("cardMov").style.display="none";
 
 }
 
 function mostrarAcesso(){
 
-document.getElementById("cardCadastro").style.display="none"
-document.getElementById("cardTransferencia").style.display="none"
-document.getElementById("cardMov").style.display="block"
+document.getElementById("cardCadastro").style.display="none";
+document.getElementById("cardTransferencia").style.display="none";
+document.getElementById("cardMov").style.display="block";
 
 }
 
 async function salvarEquipamento(){
 
-const patrimonio=document.getElementById("patrimonio").value
-const nome=document.getElementById("nome").value
-const quantidade=parseInt(document.getElementById("quantidade").value)
-const loja=document.getElementById("loja").value
-const status=document.getElementById("status").value
+const patrimonio=document.getElementById("patrimonio").value;
+const nome=document.getElementById("nome").value;
+const loja=document.getElementById("loja").value;
 
 await addDoc(collection(db,"equipamentos"),{
-patrimonio,nome,quantidade,loja,status
-})
 
-alert("Equipamento cadastrado")
+patrimonio,
+nome,
+loja
+
+});
+
+alert("Equipamento cadastrado");
 
 }
 
-window.salvarEquipamento=salvarEquipamento
+window.salvarEquipamento=salvarEquipamento;
 
 async function transferir(){
 
-const pat=document.getElementById("patTransfer").value
-const dest=document.getElementById("destino").value
-const resp=document.getElementById("responsavel").value
+const pat=document.getElementById("patTransfer").value;
+const destino=document.getElementById("destino").value;
+const resp=document.getElementById("responsavel").value;
 
-const mov={
+await addDoc(collection(db,"movimentacoes"),{
+
 tipo:"Transferência",
 patrimonio:pat,
-origem:"Loja origem",
-destino:dest,
-status:"Em transporte",
+destino:destino,
+status:"Enviado",
 responsavel:resp,
 data:new Date().toLocaleString()
+
+});
+
+carregarMov();
+
 }
 
-await addDoc(collection(db,"movimentacoes"),mov)
-
-carregarMov()
-
-}
-
-window.transferir=transferir
+window.transferir=transferir;
 
 async function carregarMov(){
 
-const querySnapshot=await getDocs(collection(db,"movimentacoes"))
+const querySnapshot=await getDocs(collection(db,"movimentacoes"));
 
-let html=""
-movimentacoes=[]
+let html="";
 
 querySnapshot.forEach((doc)=>{
 
-const m=doc.data()
-
-movimentacoes.push(m)
+const m=doc.data();
 
 html+=`
+
 <tr>
+
 <td>${m.tipo}</td>
 <td>${m.patrimonio}</td>
-<td>${m.origem}</td>
 <td>${m.destino}</td>
 <td>${m.status}</td>
 <td>${m.responsavel}</td>
 <td>${m.data}</td>
+
 <td>
-<button onclick="confirmar('${m.patrimonio}')">Confirmar</button>
+<button onclick="confirmar('${m.patrimonio}')">
+Recebido
+</button>
 </td>
+
 </tr>
-`
 
-})
+`;
 
-document.getElementById("tabelaMov").innerHTML=html
+});
 
-graficoDashboard()
+document.getElementById("tabela").innerHTML=html;
 
 }
 
 async function confirmar(pat){
 
-const nome=prompt("Nome de quem recebeu")
-const loja=prompt("Número da loja")
+const nome=prompt("Nome de quem recebeu");
+const loja=prompt("Número da loja");
 
-const mov={
+await addDoc(collection(db,"movimentacoes"),{
+
 tipo:"Recebimento",
 patrimonio:pat,
-origem:"Transporte",
 destino:loja,
 status:"Recebido",
 responsavel:nome,
 data:new Date().toLocaleString()
-}
 
-await addDoc(collection(db,"movimentacoes"),mov)
+});
 
-carregarMov()
-
-}
-
-window.confirmar=confirmar
-
-function graficoDashboard(){
-
-if(grafico)grafico.destroy()
-
-grafico=new Chart(
-
-document.getElementById("grafico"),
-
-{
-type:"bar",
-data:{
-labels:["Movimentações"],
-datasets:[{
-label:"Total",
-data:[movimentacoes.length]
-}]
-}
-
-})
+carregarMov();
 
 }
+
+window.confirmar=confirmar;
 
 </script>
 
 </body>
 </html>
-
-
