@@ -1,5 +1,260 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta http-equiv="Content-Security-Policy"
+content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'">
+
+<title>Enviar Equipamento para Transferir</title>
+
+<link rel="icon"
+href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f1f5f9;
+margin:0;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+max-width:500px;
+margin:auto;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#2563eb;
+border:none;
+color:white;
+font-size:16px;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+#cupom{
+display:none;
+margin-top:30px;
+border-top:1px dashed #000;
+padding-top:20px;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Enviar Equipamento para Transferência</h2>
+
+<input id="patTransfer" placeholder="Número do Patrimônio">
+<input id="destino" placeholder="Loja destino">
+<input id="responsavel" placeholder="Responsável pelo envio">
+
+<button onclick="transferir()">Transferir</button>
+
+<div id="cupom">
+
+<h3>Comprovante de Transferência</h3>
+
+<div id="dadosCupom"></div>
+
+<br>
+
+<canvas id="qrcode"></canvas>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs,
+addDoc,
+updateDoc,
+doc
+}
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+/* FIREBASE */
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+authDomain:"romtech-e1e15.firebaseapp.com",
+projectId:"romtech-e1e15",
+storageBucket:"romtech-e1e15.firebasestorage.app",
+messagingSenderId:"153455301031",
+appId:"1:153455301031:web:6933f2bc3f6e485c2f2682"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let equipamentos=[];
+
+/* CARREGAR EQUIPAMENTOS */
+
+async function carregarEquipamentos(){
+
+const querySnapshot = await getDocs(collection(db,"equipamentos"));
+
+equipamentos=[];
+
+querySnapshot.forEach((docSnap)=>{
+
+const e = docSnap.data();
+
+e.id = docSnap.id;
+
+equipamentos.push(e);
+
+});
+
+}
+
+carregarEquipamentos();
+
+/* TRANSFERIR */
+
+async function transferir(){
+
+const pat = document.getElementById("patTransfer").value;
+const destino = document.getElementById("destino").value;
+const responsavel = document.getElementById("responsavel").value;
+
+const eq = equipamentos.find(e => e.patrimonio == pat);
+
+if(!eq){
+
+alert("Equipamento não encontrado");
+return;
+
+}
+
+/* VERIFICAR ESTOQUE */
+
+if(eq.quantidade <= 0){
+
+alert("Estoque zerado. Não é possível transferir.");
+return;
+
+}
+
+/* DIMINUIR ESTOQUE */
+
+const novaQtd = eq.quantidade - 1;
+
+await updateDoc(
+doc(db,"equipamentos",eq.id),
+{
+quantidade:novaQtd
+}
+);
+
+/* REGISTRAR MOVIMENTAÇÃO */
+
+const data = new Date().toLocaleString();
+
+const docRef = await addDoc(
+collection(db,"movimentacoes"),
+{
+tipo:"Transferência",
+patrimonio:eq.patrimonio,
+origem:eq.loja,
+destino:destino,
+status:"Em transporte",
+responsavel:responsavel,
+data:data
+}
+);
+
+/* GERAR CUPOM */
+
+document.getElementById("cupom").style.display="block";
+
+document.getElementById("dadosCupom").innerHTML = `
+Patrimônio: ${eq.patrimonio}<br>
+Origem: ${eq.loja}<br>
+Destino: ${destino}<br>
+Responsável envio: ${responsavel}<br>
+Data: ${data}
+`;
+
+/* GERAR QR */
+
+const id = docRef.id;
+
+const urlConfirmacao =
+"https://codemagiste.github.io/Users/confirmar.html?id=" + id;
+
+QRCode.toCanvas(
+document.getElementById("qrcode"),
+urlConfirmacao
+);
+
+/* IMPRIMIR AUTOMATICO */
+
+setTimeout(()=>{
+
+window.print();
+
+},800);
+
+/* ATUALIZAR LISTA */
+
+carregarEquipamentos();
+
+}
+
+window.transferir = transferir;
+
+</script>
+
+</body>
+</html>
+```
+
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>Transferência de Equipamentos</title>
@@ -189,4 +444,5 @@ window.transferir=transferir
 
 </body>
 </html>
+
 
