@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -34,6 +35,7 @@ th,td{
 border:1px solid #ddd;
 padding:10px;
 text-align:center;
+font-size:14px;
 }
 
 th{
@@ -54,11 +56,6 @@ color:orange;
 font-weight:bold;
 }
 
-.status-cancelado{
-color:red;
-font-weight:bold;
-}
-
 </style>
 </head>
 
@@ -70,7 +67,7 @@ Painel de Visualização de Transferências
 
 <div class="container">
 
-<h3>Equipamentos em Transferência</h3>
+<h3>Transferências de Equipamentos</h3>
 
 <table>
 
@@ -80,12 +77,13 @@ Painel de Visualização de Transferências
 <th>Patrimônio</th>
 <th>Equipamento</th>
 <th>Status</th>
-<th>Loja Envio</th>
-<th>Loja Destino</th>
+<th>Origem</th>
+<th>Destino</th>
 <th>Responsável Envio</th>
 <th>Recebedor</th>
 <th>Loja Recebimento</th>
-<th>Data</th>
+<th>Data Envio</th>
+<th>Data Recebimento</th>
 </tr>
 
 </thead>
@@ -147,21 +145,7 @@ id:doc.id,
 
 })
 
-ordenarMovimentacoes()
 montarTabela()
-
-}
-
-function ordenarMovimentacoes(){
-
-movimentacoes.sort((a,b)=>{
-
-if(!a.data) return 1
-if(!b.data) return -1
-
-return new Date(b.data) - new Date(a.data)
-
-})
 
 }
 
@@ -175,39 +159,35 @@ const eq = equipamentos.find(e=>e.patrimonio == m.patrimonio)
 
 const nomeEquip = eq ? eq.nome : "Não encontrado"
 
-let statusClass="status-transporte"
-
-if(m.status=="Concluído"){
-statusClass="status-ok"
-}
-
-if(m.status=="Cancelado"){
-statusClass="status-cancelado"
-}
+let statusClass = m.status == "Concluído"
+? "status-ok"
+: "status-transporte"
 
 html+=`
 
 <tr>
 
-<td>${m.patrimonio || "-"}</td>
+<td>${m.patrimonio}</td>
 
 <td>${nomeEquip}</td>
 
 <td class="${statusClass}">
-${m.status || "-"}
+${m.status}
 </td>
 
-<td>${m.origem || "-"}</td>
+<td>${m.origem}</td>
 
-<td>${m.destino || "-"}</td>
+<td>${m.destino}</td>
 
-<td>${m.responsavel || "-"}</td>
+<td>${m.responsavel}</td>
 
-<td>${m.recebidoPor || "-"}</td>
+<td>${m.recebedor || "-"}</td>
 
 <td>${m.lojaRecebimento || "-"}</td>
 
 <td>${m.data || "-"}</td>
+
+<td>${m.dataRecebimento || "-"}</td>
 
 </tr>
 
@@ -215,7 +195,7 @@ ${m.status || "-"}
 
 })
 
-document.getElementById("tabela").innerHTML=html
+document.getElementById("tabela").innerHTML = html
 
 }
 
