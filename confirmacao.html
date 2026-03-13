@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
+
 <meta charset="UTF-8">
+
+<meta http-equiv="Content-Security-Policy"
+content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'">
+
 <title>Confirmar Recebimento</title>
+
+<link rel="icon"
+href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
 
 <style>
 
@@ -21,7 +30,7 @@ background:white;
 padding:30px;
 border-radius:10px;
 box-shadow:0 4px 15px rgba(0,0,0,0.1);
-width:350px;
+width:360px;
 text-align:center;
 }
 
@@ -55,12 +64,13 @@ background:#15803d;
 
 #sucesso{
 display:none;
+margin-top:20px;
 color:green;
 font-weight:bold;
-margin-top:20px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -82,69 +92,73 @@ margin-top:20px;
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
 import {
 getFirestore,
-updateDoc,
-doc
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+doc,
+updateDoc
+}
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 
-apiKey:"SUA_APIKEY",
+apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
 authDomain:"romtech-e1e15.firebaseapp.com",
-projectId:"romtech-e1e15"
+projectId:"romtech-e1e15",
+storageBucket:"romtech-e1e15.firebasestorage.app",
+messagingSenderId:"153455301031",
+appId:"1:153455301031:web:6933f2bc3f6e485c2f2682"
 
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const params = new URLSearchParams(window.location.search)
-const id = params.get("id")
+/* PEGAR ID DA URL */
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+/* CONFIRMAR RECEBIMENTO */
 
 async function confirmar(){
 
-const recebedor=document.getElementById("recebedor").value
-const loja=document.getElementById("loja").value
+const recebedor = document.getElementById("recebedor").value;
+const loja = document.getElementById("loja").value;
 
 if(!recebedor || !loja){
 
-alert("Preencha todos os campos")
-return
+alert("Preencha todos os campos");
+return;
 
 }
 
 try{
 
-await updateDoc(doc(db,"movimentacoes",id),{
-
+await updateDoc(
+doc(db,"movimentacoes",id),
+{
 status:"Concluído",
 recebedor:recebedor,
 lojaRecebimento:loja,
 dataRecebimento:new Date().toLocaleString()
+}
+);
 
-})
-
-document.getElementById("sucesso").style.display="block"
-
-setTimeout(()=>{
-
-window.close()
-
-},2000)
+document.getElementById("sucesso").style.display="block";
 
 }catch(e){
 
-alert("Erro ao confirmar transferência")
-
-console.error(e)
-
-}
+console.error(e);
+alert("Erro ao confirmar transferência");
 
 }
 
-window.confirmar=confirmar
+}
+
+window.confirmar = confirmar;
 
 </script>
 
