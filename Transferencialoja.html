@@ -11,7 +11,7 @@ content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'">
 <title>Enviar Equipamento para Transferir</title>
 
 <link rel="icon"
-href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
@@ -67,6 +67,30 @@ margin-top:30px;
 border-top:1px dashed #000;
 padding-top:20px;
 text-align:center;
+width:280px;
+margin:auto;
+}
+
+/* IMPRESSÃO */
+
+@media print{
+
+body *{
+visibility:hidden;
+}
+
+#cupom, #cupom *{
+visibility:visible;
+}
+
+#cupom{
+position:absolute;
+left:0;
+top:0;
+width:280px;
+margin:auto;
+}
+
 }
 
 </style>
@@ -121,7 +145,7 @@ const firebaseConfig = {
 apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
 authDomain:"romtech-e1e15.firebaseapp.com",
 projectId:"romtech-e1e15",
-storageBucket:"romtech-e1e15.firebasestorage.app",
+storageBucket:"romtech-e1e15.appspot.com",
 messagingSenderId:"153455301031",
 appId:"1:153455301031:web:6933f2bc3f6e485c2f2682"
 
@@ -136,17 +160,20 @@ let equipamentos=[];
 
 async function carregarEquipamentos(){
 
-const querySnapshot = await getDocs(collection(db,"equipamentos"));
-
 equipamentos=[];
+
+const querySnapshot = await getDocs(collection(db,"equipamentos"));
 
 querySnapshot.forEach((docSnap)=>{
 
 const e = docSnap.data();
 
-e.id = docSnap.id;
-
-equipamentos.push(e);
+equipamentos.push({
+id:docSnap.id,
+patrimonio:e.patrimonio,
+loja:e.loja,
+quantidade:Number(e.quantidade || 0)
+});
 
 });
 
@@ -158,20 +185,27 @@ carregarEquipamentos();
 
 async function transferir(){
 
-const pat = document.getElementById("patTransfer").value;
-const destino = document.getElementById("destino").value;
-const responsavel = document.getElementById("responsavel").value;
+try{
 
-const eq = equipamentos.find(e => e.patrimonio == pat);
+const pat = document.getElementById("patTransfer").value.trim();
+const destino = document.getElementById("destino").value.trim();
+const responsavel = document.getElementById("responsavel").value.trim();
 
-if(!eq){
+if(!pat || !destino || !responsavel){
 
-alert("Equipamento não encontrado, verifique o codigo de patrimonio.");
+alert("Preencha todos os campos.");
 return;
 
 }
 
-/* VERIFICAR ESTOQUE */
+const eq = equipamentos.find(e => e.patrimonio === pat);
+
+if(!eq){
+
+alert("Equipamento não encontrado.");
+return;
+
+}
 
 if(eq.quantidade <= 0){
 
@@ -191,9 +225,11 @@ quantidade:novaQtd
 }
 );
 
-/* REGISTRAR MOVIMENTAÇÃO */
+/* DATA */
 
 const data = new Date().toLocaleString();
+
+/* REGISTRAR MOVIMENTAÇÃO */
 
 const docRef = await addDoc(
 collection(db,"movimentacoes"),
@@ -232,17 +268,31 @@ document.getElementById("qrcode"),
 urlConfirmacao
 );
 
-/* IMPRIMIR AUTOMATICO */
+/* LIMPAR CAMPOS */
+
+document.getElementById("patTransfer").value="";
+document.getElementById("destino").value="";
+document.getElementById("responsavel").value="";
+
+/* IMPRIMIR */
 
 setTimeout(()=>{
 
 window.print();
 
-},800);
+},700);
 
 /* ATUALIZAR LISTA */
 
 carregarEquipamentos();
+
+}catch(e){
+
+console.error("Erro transferência:",e);
+
+alert("Erro ao realizar transferência. Veja o console.");
+
+}
 
 }
 
@@ -252,4 +302,3 @@ window.transferir = transferir;
 
 </body>
 </html>
-```
