@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Confirmar Recebimento</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f1f5f9;
+margin:0;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+}
+
+.card{
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+width:350px;
+text-align:center;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#16a34a;
+border:none;
+color:white;
+font-size:16px;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#15803d;
+}
+
+#sucesso{
+display:none;
+color:green;
+font-weight:bold;
+margin-top:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Confirmar Recebimento</h2>
+
+<input id="recebedor" placeholder="Quem está recebendo">
+<input id="loja" placeholder="Loja de recebimento">
+
+<button onclick="confirmar()">Confirmar Recebimento</button>
+
+<div id="sucesso">
+✔ Transferência confirmada com sucesso
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import {
+getFirestore,
+updateDoc,
+doc
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey:"SUA_APIKEY",
+authDomain:"romtech-e1e15.firebaseapp.com",
+projectId:"romtech-e1e15"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search)
+const id = params.get("id")
+
+async function confirmar(){
+
+const recebedor=document.getElementById("recebedor").value
+const loja=document.getElementById("loja").value
+
+if(!recebedor || !loja){
+
+alert("Preencha todos os campos")
+return
+
+}
+
+try{
+
+await updateDoc(doc(db,"movimentacoes",id),{
+
+status:"Concluído",
+recebedor:recebedor,
+lojaRecebimento:loja,
+dataRecebimento:new Date().toLocaleString()
+
+})
+
+document.getElementById("sucesso").style.display="block"
+
+setTimeout(()=>{
+
+window.close()
+
+},2000)
+
+}catch(e){
+
+alert("Erro ao confirmar transferência")
+
+console.error(e)
+
+}
+
+}
+
+window.confirmar=confirmar
+
+</script>
+
+</body>
+</html>
