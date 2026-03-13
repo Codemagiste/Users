@@ -77,7 +77,7 @@ text-align:center;
 
 <div class="card">
 
-<h2>Enviar Equipamento para Transferência</h2>
+<h2>Enviar Equipamento para Transferir</h2>
 
 <input id="patTransfer" placeholder="Número do Patrimônio">
 <input id="destino" placeholder="Loja destino">
@@ -166,7 +166,7 @@ const eq = equipamentos.find(e => e.patrimonio == pat);
 
 if(!eq){
 
-alert("Equipamento não encontrado");
+alert("Equipamento não encontrado, verifique o codigo de patrimonio.");
 return;
 
 }
@@ -225,7 +225,7 @@ Data: ${data}
 const id = docRef.id;
 
 const urlConfirmacao =
-"https://codemagiste.github.io/Users/confirmar.html?id=" + id;
+"https://codemagiste.github.io/Users/confirmacao.html?id=" + id;
 
 QRCode.toCanvas(
 document.getElementById("qrcode"),
@@ -253,196 +253,3 @@ window.transferir = transferir;
 </body>
 </html>
 ```
-
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Transferência de Equipamentos</title>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f1f5f9;
-margin:0;
-}
-
-header{
-background:#0f172a;
-color:white;
-padding:15px;
-font-size:20px;
-}
-
-.container{
-padding:20px;
-max-width:600px;
-margin:auto;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-input,button{
-width:100%;
-padding:10px;
-margin-top:10px;
-}
-
-button{
-background:#2563eb;
-border:none;
-color:white;
-cursor:pointer;
-}
-
-button:hover{
-background:#1d4ed8;
-}
-
-#cupom{
-display:none;
-margin-top:20px;
-padding:20px;
-border:1px dashed black;
-background:white;
-text-align:center;
-}
-
-</style>
-</head>
-
-<body>
-
-<header>Transferência de Equipamentos</header>
-
-<div class="container">
-
-<div class="card">
-
-<h3>Nova Transferência</h3>
-
-<input id="patrimonio" placeholder="Número do Patrimônio">
-<input id="destino" placeholder="Loja Destino">
-<input id="responsavel" placeholder="Responsável pelo Envio">
-
-<button onclick="transferir()">Transferir</button>
-
-</div>
-
-<div id="cupom">
-
-<h3>COMPROVANTE DE TRANSFERÊNCIA</h3>
-
-<div id="dadosCupom"></div>
-
-<br>
-
-<canvas id="qrcode"></canvas>
-
-<p>Escaneie o QR Code para confirmar recebimento</p>
-
-</div>
-
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import {
-getFirestore,
-collection,
-addDoc
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-
-const firebaseConfig = {
-
-apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBwY",
-authDomain:"romtech-e1e15.firebaseapp.com",
-projectId:"romtech-e1e15"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-async function transferir(){
-
-const patrimonio=document.getElementById("patrimonio").value
-const destino=document.getElementById("destino").value
-const responsavel=document.getElementById("responsavel").value
-
-if(!patrimonio || !destino || !responsavel){
-
-alert("Preencha todos os campos")
-return
-
-}
-
-const data=new Date().toLocaleString()
-
-const docRef = await addDoc(collection(db,"movimentacoes"),{
-
-tipo:"Transferência",
-patrimonio,
-origem:"Centro Logístico",
-destino,
-responsavel,
-status:"Aguardando Recebimento",
-data
-
-})
-
-const id=docRef.id
-
-document.getElementById("cupom").style.display="block"
-
-document.getElementById("dadosCupom").innerHTML=`
-
-Patrimônio: ${patrimonio}<br>
-Destino: ${destino}<br>
-Responsável envio: ${responsavel}<br>
-Data: ${data}
-
-`
-
-// LINK CORRETO PARA SEU GITHUB
-const urlConfirmacao = "https://codemagiste.github.io/Users/confirmacao.html?id=" + id
-
-const canvas=document.getElementById("qrcode")
-
-QRCode.toCanvas(canvas,urlConfirmacao,function(error){
-
-if(error){
-
-console.error(error)
-
-}else{
-
-// abre impressão automática
-setTimeout(()=>{
-
-window.print()
-
-},500)
-
-}
-
-})
-
-}
-
-window.transferir=transferir
-
-</script>
-
-</body>
-</html>
-
-
