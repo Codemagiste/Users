@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Transferência de Equipamento</title>
+<title>Transferência de Equipamentos</title>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
@@ -157,7 +157,8 @@ Data: ${data}
 
 `
 
-const urlConfirmacao = window.location.origin + "/confirmar.html?id=" + id'
+// LINK CORRETO PARA SEU GITHUB
+const urlConfirmacao = "https://codemagiste.github.io/Users/confirmar.html?id=" + id
 
 const canvas=document.getElementById("qrcode")
 
@@ -169,7 +170,7 @@ console.error(error)
 
 }else{
 
-// AGUARDA GERAR O QR E JÁ ABRE IMPRESSÃO
+// abre impressão automática
 setTimeout(()=>{
 
 window.print()
@@ -187,5 +188,4 @@ window.transferir=transferir
 </script>
 
 </body>
-
 </html>
