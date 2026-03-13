@@ -5,7 +5,6 @@
 <title>Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
 
@@ -43,6 +42,14 @@ button:hover{
 background:#1d4ed8;
 }
 
+.btn-delete{
+background:#dc2626;
+}
+
+.btn-ok{
+background:#16a34a;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -62,19 +69,42 @@ border-radius:8px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
+/* LOGIN COM IMAGEM */
+
 #login{
 display:flex;
 height:100vh;
 align-items:center;
 justify-content:center;
-background:#0f172a;
-color:white;
+
+background-image:url("https://images.unsplash.com/photo-1518770660439-4636190af475");
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+
+position:relative;
+}
+
+#login::before{
+content:"";
+position:absolute;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
 }
 
 #loginBox{
+position:relative;
 background:#1e293b;
 padding:40px;
 border-radius:10px;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+color:white;
+text-align:center;
+}
+
+#loginBox input{
+width:200px;
 }
 
 </style>
@@ -138,6 +168,7 @@ Inventário TI
 <th>Qtd</th>
 <th>Loja</th>
 <th>Status</th>
+<th>Ações</th>
 </tr>
 </thead>
 
@@ -174,6 +205,7 @@ Inventário TI
 <th>Status</th>
 <th>Responsável</th>
 <th>Data</th>
+<th>Ações</th>
 </tr>
 </thead>
 
@@ -202,18 +234,18 @@ import {
 getFirestore,
 collection,
 addDoc,
-getDocs
+getDocs,
+updateDoc,
+deleteDoc,
+doc
 }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+
+apiKey: "SUA_APIKEY",
 authDomain: "romtech-e1e15.firebaseapp.com",
-projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.firebasestorage.app",
-messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
-measurementId: "G-1DBYYTTXM4"
+projectId: "romtech-e1e15"
 
 };
 
@@ -224,26 +256,27 @@ let equipamentos=[]
 let movimentacoes=[]
 let grafico
 
-// ELEMENTOS DOM
 const loginDiv = document.getElementById("login")
 const appDiv = document.getElementById("app")
 
-// LOGIN
 function login(){
 
 const user=document.getElementById("usuario").value
 const pass=document.getElementById("senha").value
 
-if(user==="" || pass===""){
-alert("Informe usuário e senha")
-return
-}
+if(user==="admin" && pass==="123"){
 
 loginDiv.style.display="none"
 appDiv.style.display="block"
 
 carregarEquipamentos()
 carregarMov()
+
+}else{
+
+alert("Login inválido")
+
+}
 
 }
 
@@ -255,7 +288,6 @@ location.reload()
 
 window.logout=logout
 
-// SALVAR EQUIPAMENTO
 async function salvarEquipamento(){
 
 const patrimonio=document.getElementById("patrimonio").value
@@ -265,11 +297,13 @@ const loja=document.getElementById("loja").value
 const status=document.getElementById("status").value
 
 await addDoc(collection(db,"equipamentos"),{
+
 patrimonio,
 nome,
 quantidade,
 loja,
 status
+
 })
 
 carregarEquipamentos()
@@ -278,28 +312,41 @@ carregarEquipamentos()
 
 window.salvarEquipamento=salvarEquipamento
 
-// CARREGAR EQUIPAMENTOS
 async function carregarEquipamentos(){
 
 const querySnapshot = await getDocs(collection(db,"equipamentos"))
 
 equipamentos=[]
+
 let html=""
 
-querySnapshot.forEach((doc)=>{
+querySnapshot.forEach((docSnap)=>{
 
-const e=doc.data()
+const e=docSnap.data()
 
-equipamentos.push(e)
+equipamentos.push({
+id:docSnap.id,
+...e
+})
 
 html+=`
+
 <tr>
+
 <td>${e.patrimonio}</td>
 <td>${e.nome}</td>
 <td>${e.quantidade}</td>
 <td>${e.loja}</td>
 <td>${e.status}</td>
+
+<td>
+
+<button onclick="excluirEquip('${docSnap.id}')" class="btn-delete">Excluir</button>
+
+</td>
+
 </tr>
+
 `
 
 })
@@ -308,7 +355,20 @@ document.getElementById("tabelaEquip").innerHTML=html
 
 }
 
-// TRANSFERIR
+async function excluirEquip(id){
+
+if(confirm("Excluir equipamento?")){
+
+await deleteDoc(doc(db,"equipamentos",id))
+
+carregarEquipamentos()
+
+}
+
+}
+
+window.excluirEquip=excluirEquip
+
 async function transferir(){
 
 const pat=document.getElementById("patTransfer").value
@@ -318,11 +378,21 @@ const resp=document.getElementById("responsavel").value
 const eq=equipamentos.find(e=>e.patrimonio==pat)
 
 if(!eq){
+
 alert("Equipamento não encontrado")
+
 return
+
 }
 
+await updateDoc(doc(db,"equipamentos",eq.id),{
+
+loja:dest
+
+})
+
 const mov={
+
 tipo:"Transferência",
 patrimonio:eq.patrimonio,
 origem:eq.loja,
@@ -330,33 +400,39 @@ destino:dest,
 status:"Em transporte",
 responsavel:resp,
 data:new Date().toLocaleString()
+
 }
 
 await addDoc(collection(db,"movimentacoes"),mov)
 
-carregarMov()
 carregarEquipamentos()
+carregarMov()
 
 }
 
 window.transferir=transferir
 
-// CARREGAR MOVIMENTAÇÕES
 async function carregarMov(){
 
 const querySnapshot = await getDocs(collection(db,"movimentacoes"))
 
 movimentacoes=[]
+
 let html=""
 
-querySnapshot.forEach((doc)=>{
+querySnapshot.forEach((docSnap)=>{
 
-const m=doc.data()
+const m=docSnap.data()
 
-movimentacoes.push(m)
+movimentacoes.push({
+id:docSnap.id,
+...m
+})
 
 html+=`
+
 <tr>
+
 <td>${m.tipo}</td>
 <td>${m.patrimonio}</td>
 <td>${m.origem}</td>
@@ -364,7 +440,17 @@ html+=`
 <td>${m.status}</td>
 <td>${m.responsavel}</td>
 <td>${m.data}</td>
+
+<td>
+
+<button onclick="baixaTransfer('${docSnap.id}')" class="btn-ok">Baixa</button>
+
+<button onclick="excluirMov('${docSnap.id}')" class="btn-delete">Excluir</button>
+
+</td>
+
 </tr>
+
 `
 
 })
@@ -375,7 +461,34 @@ graficoDashboard()
 
 }
 
-// DASHBOARD
+async function baixaTransfer(id){
+
+await updateDoc(doc(db,"movimentacoes",id),{
+
+status:"Concluído"
+
+})
+
+carregarMov()
+
+}
+
+window.baixaTransfer=baixaTransfer
+
+async function excluirMov(id){
+
+if(confirm("Excluir movimentação?")){
+
+await deleteDoc(doc(db,"movimentacoes",id))
+
+carregarMov()
+
+}
+
+}
+
+window.excluirMov=excluirMov
+
 function graficoDashboard(){
 
 if(grafico)grafico.destroy()
@@ -399,4 +512,3 @@ data:[movimentacoes.length]
 
 </body>
 </html>
-
