@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
 <meta charset="UTF-8">
 <title>Painel de Transferências</title>
@@ -53,6 +54,11 @@ color:orange;
 font-weight:bold;
 }
 
+.status-cancelado{
+color:red;
+font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -69,14 +75,19 @@ Painel de Visualização de Transferências
 <table>
 
 <thead>
+
 <tr>
 <th>Patrimônio</th>
 <th>Equipamento</th>
 <th>Status</th>
 <th>Loja Envio</th>
 <th>Loja Destino</th>
-<th>Responsável</th>
+<th>Responsável Envio</th>
+<th>Recebedor</th>
+<th>Loja Recebimento</th>
+<th>Data</th>
 </tr>
+
 </thead>
 
 <tbody id="tabela"></tbody>
@@ -98,7 +109,7 @@ from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 
-apiKey: "SUA_APIKEY",
+apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
 authDomain: "romtech-e1e15.firebaseapp.com",
 projectId: "romtech-e1e15"
 
@@ -120,17 +131,37 @@ movimentacoes=[]
 
 equipSnap.forEach(doc=>{
 
-equipamentos.push(doc.data())
+equipamentos.push({
+id:doc.id,
+...doc.data()
+})
 
 })
 
 movSnap.forEach(doc=>{
 
-movimentacoes.push(doc.data())
+movimentacoes.push({
+id:doc.id,
+...doc.data()
+})
 
 })
 
+ordenarMovimentacoes()
 montarTabela()
+
+}
+
+function ordenarMovimentacoes(){
+
+movimentacoes.sort((a,b)=>{
+
+if(!a.data) return 1
+if(!b.data) return -1
+
+return new Date(b.data) - new Date(a.data)
+
+})
 
 }
 
@@ -140,28 +171,43 @@ let html=""
 
 movimentacoes.forEach(m=>{
 
-const eq = equipamentos.find(e=>e.patrimonio==m.patrimonio)
+const eq = equipamentos.find(e=>e.patrimonio == m.patrimonio)
 
 const nomeEquip = eq ? eq.nome : "Não encontrado"
 
-let statusClass = m.status=="Concluído"
-? "status-ok"
-: "status-transporte"
+let statusClass="status-transporte"
+
+if(m.status=="Concluído"){
+statusClass="status-ok"
+}
+
+if(m.status=="Cancelado"){
+statusClass="status-cancelado"
+}
 
 html+=`
 
 <tr>
 
-<td>${m.patrimonio}</td>
+<td>${m.patrimonio || "-"}</td>
+
 <td>${nomeEquip}</td>
 
 <td class="${statusClass}">
-${m.status}
+${m.status || "-"}
 </td>
 
-<td>${m.origem}</td>
-<td>${m.destino}</td>
-<td>${m.responsavel}</td>
+<td>${m.origem || "-"}</td>
+
+<td>${m.destino || "-"}</td>
+
+<td>${m.responsavel || "-"}</td>
+
+<td>${m.recebidoPor || "-"}</td>
+
+<td>${m.lojaRecebimento || "-"}</td>
+
+<td>${m.data || "-"}</td>
 
 </tr>
 
@@ -178,4 +224,6 @@ carregarDados()
 </script>
 
 </body>
+
 </html>
+```
