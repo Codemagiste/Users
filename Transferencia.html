@@ -5,6 +5,7 @@
 <title>Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
 
@@ -201,9 +202,7 @@ import {
 getFirestore,
 collection,
 addDoc,
-getDocs,
-updateDoc,
-doc
+getDocs
 }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -211,9 +210,11 @@ const firebaseConfig = {
 apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
 authDomain: "romtech-e1e15.firebaseapp.com",
 projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.appspot.com",
+storageBucket: "romtech-e1e15.firebasestorage.app",
 messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
+appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
+measurementId: "G-1DBYYTTXM4"
+
 };
 
 const appFirebase = initializeApp(firebaseConfig);
@@ -223,24 +224,26 @@ let equipamentos=[]
 let movimentacoes=[]
 let grafico
 
+// ELEMENTOS DOM
 const loginDiv = document.getElementById("login")
 const appDiv = document.getElementById("app")
 
+// LOGIN
 function login(){
 
 const user=document.getElementById("usuario").value
 const pass=document.getElementById("senha").value
 
-if(user==="admin" && pass==="123"){
+if(user==="" || pass===""){
+alert("Informe usuário e senha")
+return
+}
+
 loginDiv.style.display="none"
 appDiv.style.display="block"
 
 carregarEquipamentos()
 carregarMov()
-
-}else{
-alert("Usuário ou senha inválido")
-}
 
 }
 
@@ -252,6 +255,7 @@ location.reload()
 
 window.logout=logout
 
+// SALVAR EQUIPAMENTO
 async function salvarEquipamento(){
 
 const patrimonio=document.getElementById("patrimonio").value
@@ -259,11 +263,6 @@ const nome=document.getElementById("nome").value
 const quantidade=parseInt(document.getElementById("quantidade").value)
 const loja=document.getElementById("loja").value
 const status=document.getElementById("status").value
-
-if(!patrimonio || !nome){
-alert("Preencha os campos")
-return
-}
 
 await addDoc(collection(db,"equipamentos"),{
 patrimonio,
@@ -273,16 +272,13 @@ loja,
 status
 })
 
-document.getElementById("patrimonio").value=""
-document.getElementById("nome").value=""
-document.getElementById("loja").value=""
-
 carregarEquipamentos()
 
 }
 
 window.salvarEquipamento=salvarEquipamento
 
+// CARREGAR EQUIPAMENTOS
 async function carregarEquipamentos(){
 
 const querySnapshot = await getDocs(collection(db,"equipamentos"))
@@ -290,14 +286,11 @@ const querySnapshot = await getDocs(collection(db,"equipamentos"))
 equipamentos=[]
 let html=""
 
-querySnapshot.forEach((docSnap)=>{
+querySnapshot.forEach((doc)=>{
 
-const e=docSnap.data()
+const e=doc.data()
 
-equipamentos.push({
-id:docSnap.id,
-...e
-})
+equipamentos.push(e)
 
 html+=`
 <tr>
@@ -315,6 +308,7 @@ document.getElementById("tabelaEquip").innerHTML=html
 
 }
 
+// TRANSFERIR
 async function transferir(){
 
 const pat=document.getElementById("patTransfer").value
@@ -328,29 +322,26 @@ alert("Equipamento não encontrado")
 return
 }
 
-await updateDoc(doc(db,"equipamentos",eq.id),{
-loja:dest
-})
-
 const mov={
 tipo:"Transferência",
 patrimonio:eq.patrimonio,
 origem:eq.loja,
 destino:dest,
-status:"Transferido",
+status:"Em transporte",
 responsavel:resp,
 data:new Date().toLocaleString()
 }
 
 await addDoc(collection(db,"movimentacoes"),mov)
 
-carregarEquipamentos()
 carregarMov()
+carregarEquipamentos()
 
 }
 
 window.transferir=transferir
 
+// CARREGAR MOVIMENTAÇÕES
 async function carregarMov(){
 
 const querySnapshot = await getDocs(collection(db,"movimentacoes"))
@@ -384,6 +375,7 @@ graficoDashboard()
 
 }
 
+// DASHBOARD
 function graficoDashboard(){
 
 if(grafico)grafico.destroy()
