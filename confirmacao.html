@@ -62,6 +62,11 @@ button:hover{
 background:#15803d;
 }
 
+button:disabled{
+background:#94a3b8;
+cursor:not-allowed;
+}
+
 #sucesso{
 display:none;
 margin-top:20px;
@@ -82,11 +87,9 @@ font-weight:bold;
 <input id="recebedor" placeholder="Quem está recebendo">
 <input id="loja" placeholder="Loja de recebimento">
 
-<button onclick="confirmar()">Confirmar Recebimento</button>
+<button id="btnConfirmar" onclick="confirmar()">Confirmar Recebimento</button>
 
-<div id="sucesso">
-✔ Transferência confirmada com sucesso
-</div>
+<div id="sucesso"></div>
 
 </div>
 
@@ -101,6 +104,8 @@ doc,
 updateDoc
 }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+/* CONFIGURAÇÃO FIREBASE */
 
 const firebaseConfig = {
 
@@ -121,7 +126,7 @@ const db = getFirestore(app);
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-/* CONFIRMAR RECEBIMENTO */
+/* FUNÇÃO CONFIRMAR RECEBIMENTO */
 
 async function confirmar(){
 
@@ -147,7 +152,22 @@ dataRecebimento:new Date().toLocaleString()
 }
 );
 
-document.getElementById("sucesso").style.display="block";
+/* LIMPAR CAMPOS */
+
+document.getElementById("recebedor").value="";
+document.getElementById("loja").value="";
+
+/* DESABILITAR BOTÃO */
+
+document.getElementById("btnConfirmar").disabled=true;
+
+/* MOSTRAR MENSAGEM */
+
+const msg = document.getElementById("sucesso");
+
+msg.innerHTML = "✔ Transferência confirmada.<br>Você pode fechar esta página.";
+
+msg.style.display="block";
 
 }catch(e){
 
