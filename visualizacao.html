@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Painel de Transferências</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f1f5f9;
+}
+
+header{
+background:#0f172a;
+color:white;
+padding:15px;
+font-size:20px;
+}
+
+.container{
+padding:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#e2e8f0;
+}
+
+tr:nth-child(even){
+background:#f8fafc;
+}
+
+.status-ok{
+color:green;
+font-weight:bold;
+}
+
+.status-transporte{
+color:orange;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+Painel de Visualização de Transferências
+</header>
+
+<div class="container">
+
+<h3>Equipamentos em Transferência</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Patrimônio</th>
+<th>Equipamento</th>
+<th>Status</th>
+<th>Loja Envio</th>
+<th>Loja Destino</th>
+<th>Responsável</th>
+</tr>
+</thead>
+
+<tbody id="tabela"></tbody>
+
+</table>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs
+}
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey: "SUA_APIKEY",
+authDomain: "romtech-e1e15.firebaseapp.com",
+projectId: "romtech-e1e15"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let equipamentos=[]
+let movimentacoes=[]
+
+async function carregarDados(){
+
+const equipSnap = await getDocs(collection(db,"equipamentos"))
+const movSnap = await getDocs(collection(db,"movimentacoes"))
+
+equipamentos=[]
+movimentacoes=[]
+
+equipSnap.forEach(doc=>{
+
+equipamentos.push(doc.data())
+
+})
+
+movSnap.forEach(doc=>{
+
+movimentacoes.push(doc.data())
+
+})
+
+montarTabela()
+
+}
+
+function montarTabela(){
+
+let html=""
+
+movimentacoes.forEach(m=>{
+
+const eq = equipamentos.find(e=>e.patrimonio==m.patrimonio)
+
+const nomeEquip = eq ? eq.nome : "Não encontrado"
+
+let statusClass = m.status=="Concluído"
+? "status-ok"
+: "status-transporte"
+
+html+=`
+
+<tr>
+
+<td>${m.patrimonio}</td>
+<td>${nomeEquip}</td>
+
+<td class="${statusClass}">
+${m.status}
+</td>
+
+<td>${m.origem}</td>
+<td>${m.destino}</td>
+<td>${m.responsavel}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("tabela").innerHTML=html
+
+}
+
+carregarDados()
+
+</script>
+
+</body>
+</html>
