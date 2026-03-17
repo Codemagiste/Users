@@ -6,25 +6,102 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
-body{background:linear-gradient(135deg,#0f172a,#1e293b);padding:30px;color:#1e293b;}
-.header{background:#0f172a;color:white;padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
-.card{background:white;padding:25px;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.08);margin-bottom:25px;}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;}
-input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;}
+
+body{
+background:linear-gradient(135deg,#0f172a,#1e293b);
+padding:30px;
+color:#1e293b;
+}
+
+.header{
+background:#0f172a;
+color:white;
+padding:25px;
+border-radius:12px;
+margin-bottom:25px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 8px 30px rgba(0,0,0,0.08);
+margin-bottom:25px;
+}
+
+.form-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:15px;
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+border-radius:8px;
+border:1px solid #d1d5db;
+font-size:14px;
+}
+
 textarea{margin-top:15px;}
-button{background:#2563eb;color:white;border:none;padding:12px 18px;border-radius:10px;cursor:pointer;margin-top:15px;font-weight:bold;transition:0.2s;}
+
+button{
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 18px;
+border-radius:10px;
+cursor:pointer;
+margin-top:15px;
+font-weight:bold;
+transition:0.2s;
+}
+
 button:hover{transform:scale(1.05);}
+
 .btn-green{background:#16a34a;}
 .btn-red{background:#dc2626;}
 .btn-gray{background:#475569;}
-table{width:100%;border-collapse:collapse;margin-top:20px;}
-th{background:#0f172a;color:white;padding:14px;text-align:left;}
-td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
-.actions button{margin-right:5px;padding:8px 12px;font-size:12px;}
-.status{padding:6px 10px;border-radius:20px;font-size:12px;font-weight:bold;color:white;text-align:center;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th{
+background:#0f172a;
+color:white;
+padding:14px;
+text-align:left;
+}
+
+td{
+padding:12px;
+border-bottom:1px solid #eee;
+font-size:14px;
+}
+
+.actions button{
+margin-right:5px;
+padding:8px 12px;
+font-size:12px;
+}
+
+.status{
+padding:6px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:bold;
+color:white;
+text-align:center;
+}
+
 .em-andamento{background:#f59e0b;}
 .finalizada{background:#2563eb;}
 .entregue{background:#16a34a;}
+
 </style>
 </head>
 
@@ -35,8 +112,11 @@ td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
 </div>
 
 <div class="card">
+
 <form id="formEquipamento">
+
 <div class="form-grid">
+
 <input type="text" id="loja" placeholder="Loja de Entrada" required>
 <input type="text" id="setor" placeholder="Setor de Recebimento" required>
 <input type="text" id="ticket" placeholder="Ticket Milvus" required>
@@ -45,20 +125,27 @@ td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
 <input type="text" id="equipamento" placeholder="Equipamento" required>
 <input type="text" id="modelo" placeholder="Marca / Modelo">
 <input type="text" id="serie" placeholder="Número de Série">
+
 <select id="status" required>
 <option value="">Status da OS</option>
 <option value="Em andamento">Em andamento</option>
 <option value="Finalizada">Finalizada</option>
 <option value="Entregue">Entregue</option>
 </select>
+
 </div>
+
 <textarea id="defeito" placeholder="Defeito informado"></textarea>
+
 <button type="submit">📄 Registrar e Gerar OS</button>
+
 </form>
+
 </div>
 
 <div class="card">
 <h2>Ordens de Serviço</h2>
+
 <table id="tabela">
 <thead>
 <tr>
@@ -73,73 +160,33 @@ td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
 </thead>
 <tbody></tbody>
 </table>
+
 </div>
 
 <button class="btn-gray" onclick="voltar()">⬅ Voltar ao Início</button>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB5wjNolrTWjDRp8qEqz-gPqplPw3RIzMQ",
-  authDomain: "manutencaoromtech.firebaseapp.com",
-  projectId: "manutencaoromtech",
-  storageBucket: "manutencaoromtech.firebasestorage.app",
-  messagingSenderId: "148127002919",
-  appId: "1:148127002919:web:166c7e0e0252e7d4c47902",
-  measurementId: "G-Y2CZZC0B2G"
-};
+let listaOS = JSON.parse(localStorage.getItem("ordens")) || [];
+let contadorOS = parseInt(localStorage.getItem("contadorOS")) || 0;
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let contadorOS = 0;
+function salvarStorage(){
+localStorage.setItem("ordens", JSON.stringify(listaOS));
+localStorage.setItem("contadorOS", contadorOS.toString());
+}
 
 function gerarNumeroOS(){
 contadorOS++;
+salvarStorage();
 return new Date().getFullYear() + "-" + String(contadorOS).padStart(4,"0");
 }
 
-async function carregarOS(){
-const querySnapshot = await getDocs(collection(db, "ordens_servico"));
-const tbody=document.querySelector("#tabela tbody");
-tbody.innerHTML="";
-
-querySnapshot.forEach((docSnap)=>{
-const d = docSnap.data();
-const id = docSnap.id;
-
-const linha=tbody.insertRow();
-linha.insertCell().textContent=d.os;
-linha.insertCell().textContent=new Date(d.data.seconds*1000).toLocaleString();
-linha.insertCell().textContent=d.cliente;
-linha.insertCell().textContent=d.equipamento;
-linha.insertCell().textContent=d.tecnico;
-
-let classeStatus="";
-if(d.status==="Em andamento") classeStatus="em-andamento";
-if(d.status==="Finalizada") classeStatus="finalizada";
-if(d.status==="Entregue") classeStatus="entregue";
-
-linha.insertCell().innerHTML=`<span class="status ${classeStatus}">${d.status}</span>`;
-
-const acao=linha.insertCell();
-acao.classList.add("actions");
-acao.innerHTML=`
-<button class="btn-green" onclick='imprimir(${JSON.stringify(d).replace(/"/g,'&quot;')})'>🖨</button>
-<button class="btn-gray" onclick="alterarStatus('${id}')">🔄</button>
-<button class="btn-red" onclick="excluirOS('${id}')">🗑</button>
-`;
-});
-}
-
-document.getElementById("formEquipamento").addEventListener("submit", async function(e){
+document.getElementById("formEquipamento").addEventListener("submit", function(e){
 e.preventDefault();
 
 const dados={
 os:gerarNumeroOS(),
-data:new Date(),
+data:new Date().toLocaleString(),
 loja:loja.value,
 setor:setor.value,
 ticket:ticket.value,
@@ -152,44 +199,82 @@ defeito:defeito.value,
 status:status.value
 };
 
-await addDoc(collection(db, "ordens_servico"), dados);
-alert("✅ OS registrada com sucesso!");
+listaOS.push(dados);
+salvarStorage();
+renderTabela();
+gerarComprovante(dados);
 this.reset();
-carregarOS();
 });
 
-window.excluirOS = async function(id){
-if(confirm("Deseja excluir esta OS?")){
-await deleteDoc(doc(db,"ordens_servico",id));
-carregarOS();
+function renderTabela(){
+const tbody=document.querySelector("#tabela tbody");
+tbody.innerHTML="";
+
+listaOS.forEach((d,index)=>{
+const linha=tbody.insertRow();
+
+linha.insertCell().textContent=d.os;
+linha.insertCell().textContent=d.data;
+linha.insertCell().textContent=d.cliente;
+linha.insertCell().textContent=d.equipamento;
+linha.insertCell().textContent=d.tecnico;
+
+let classeStatus="";
+if(d.status==="Em andamento") classeStatus="em-andamento";
+if(d.status==="Finalizada") classeStatus="finalizada";
+if(d.status==="Entregue") classeStatus="entregue";
+
+linha.insertCell().innerHTML=
+`<span class="status ${classeStatus}">${d.status}</span>`;
+
+const acao=linha.insertCell();
+acao.classList.add("actions");
+acao.innerHTML=`
+<button class="btn-green" onclick='gerarComprovante(${JSON.stringify(d)})'>🖨</button>
+<button class="btn-gray" onclick="alterarStatus(${index})">🔄</button>
+<button class="btn-red" onclick="excluirOS(${index})">🗑</button>
+`;
+});
+}
+
+function alterarStatus(index){
+
+let novoStatus = prompt(
+"Digite o número do novo status:\n1 - Em andamento\n2 - Finalizada\n3 - Entregue"
+);
+
+if(novoStatus==="1") listaOS[index].status="Em andamento";
+if(novoStatus==="2") listaOS[index].status="Finalizada";
+if(novoStatus==="3") listaOS[index].status="Entregue";
+
+salvarStorage();
+renderTabela();
+}
+
+function excluirOS(index){
+if(confirm("Deseja realmente excluir esta OS?")){
+listaOS.splice(index,1);
+salvarStorage();
+renderTabela();
 }
 }
 
-window.alterarStatus = async function(id){
-let opcao = prompt("1 - Em andamento\n2 - Finalizada\n3 - Entregue");
-let novo="";
-if(opcao==="1") novo="Em andamento";
-if(opcao==="2") novo="Finalizada";
-if(opcao==="3") novo="Entregue";
-if(novo){
-await updateDoc(doc(db,"ordens_servico",id),{status:novo});
-carregarOS();
-}
-}
-
-window.imprimir = function(d){
+function gerarComprovante(d){
 const janela=window.open("","","width=500,height=700");
+
 janela.document.write(`
 <style>
 body{font-family:Arial;padding:20px;}
 h2{text-align:center;}
 hr{margin:10px 0;}
 p{font-size:14px;margin:5px 0;}
+.status{font-weight:bold;}
 </style>
+
 <h2>ORDEM DE SERVIÇO</h2>
 <hr>
 <p><b>Nº:</b> ${d.os}</p>
-<p><b>Data:</b> ${new Date(d.data.seconds*1000).toLocaleString()}</p>
+<p><b>Data:</b> ${d.data}</p>
 <p><b>Status:</b> ${d.status}</p>
 <hr>
 <p><b>Cliente:</b> ${d.cliente}</p>
@@ -200,22 +285,24 @@ p{font-size:14px;margin:5px 0;}
 <hr>
 <p><b>Loja:</b> ${d.loja}</p>
 <p><b>Setor:</b> ${d.setor}</p>
-<p><b>Ticket:</b> ${d.ticket}</p>
+<p><b>Ticket Milvus:</b> ${d.ticket}</p>
 <p><b>Técnico:</b> ${d.tecnico}</p>
-<br><br><br>_____________________________<br>Assinatura do Cliente
+
+<br><br><br>
+_____________________________<br>
+Assinatura do Cliente
 `);
+
 janela.print();
 }
 
-window.voltar = function(){
+function voltar(){
 window.location.href="index.html";
 }
 
-carregarOS();
+renderTabela();
+
 </script>
-<footer class="rodape">
-© 2026 Todos os direitos reservados<br>
-Desenvolvimento exclusivo :contentReference[oaicite:0]{index=0}
-</footer>
+
 </body>
 </html>
