@@ -8,150 +8,148 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 :root{
---azul:#2563eb;
---azul-escuro:#1e3a8a;
---bg:#f1f5f9;
---card:#ffffff;
---texto:#0f172a;
---sombra:0 10px 25px rgba(0,0,0,.08);
+  --azul:#2563eb;
+  --azul-escuro:#1e3a8a;
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --texto:#0f172a;
+  --sombra:0 10px 25px rgba(0,0,0,.08);
 }
 
 *{box-sizing:border-box}
 
 body{
-margin:0;
-font-family:'Segoe UI',Arial;
-background:linear-gradient(135deg,#e2e8f0,#f8fafc);
-color:var(--texto);
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(135deg,#e2e8f0,#f8fafc);
+  color:var(--texto);
 }
 
 /* LOGIN */
-
 #login{
-display:flex;
-align-items:center;
-justify-content:center;
-height:100vh;
-background:linear-gradient(135deg,#0f172a,#1e293b);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  background:linear-gradient(135deg,#0f172a,#1e293b);
 }
 
 #loginBox{
-background:rgba(255,255,255,.05);
-backdrop-filter:blur(12px);
-padding:40px;
-border-radius:16px;
-box-shadow:var(--sombra);
-text-align:center;
-width:320px;
+  background:#ffffff;
+  padding:40px;
+  border-radius:16px;
+  box-shadow:var(--sombra);
+  text-align:center;
+  width:320px;
 }
 
 .logo{
-width:220px;
-margin-bottom:20px;
+  width:220px;
+  margin-bottom:20px;
 }
 
 #loginBox h2{
-color:#fff;
-margin-bottom:20px;
+  color:#0f172a;
+  margin-bottom:20px;
 }
 
 #loginBox input{
-width:100%;
-padding:12px;
-margin:8px 0;
-border:none;
-border-radius:8px;
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border:none;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
 }
 
 /* BOTÕES */
-
 button{
-background:linear-gradient(145deg,var(--azul),var(--azul-escuro));
-color:#fff;
-border:none;
-padding:10px 16px;
-border-radius:8px;
-cursor:pointer;
-box-shadow:0 4px 0 #1e40af;
-transition:.15s;
-font-weight:600;
+  background:linear-gradient(145deg,var(--azul),var(--azul-escuro));
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
+  cursor:pointer;
+  box-shadow:0 4px 0 #1e40af;
+  transition:.15s;
+  font-weight:600;
 }
 
 button:hover{filter:brightness(1.05)}
 button:active{transform:translateY(3px);box-shadow:0 1px 0 #1e40af}
 
 /* HEADER */
-
 header{
-background:linear-gradient(90deg,#0f172a,#1e293b);
-color:#fff;
-padding:16px 24px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-box-shadow:var(--sombra);
+  background:linear-gradient(90deg,#0f172a,#1e293b);
+  color:#fff;
+  padding:16px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:var(--sombra);
 }
 
 header h1{font-size:20px;margin:0}
 
 /* CONTAINER */
-
 .container{padding:24px;max-width:1200px;margin:auto}
 
 /* CARDS */
-
 .card{
-background:var(--card);
-border-radius:14px;
-padding:20px;
-margin-bottom:22px;
-box-shadow:var(--sombra);
+  background:var(--card);
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:22px;
+  box-shadow:var(--sombra);
 }
 
 .card h3{margin-top:0}
 
 /* FORM */
-
 input,select{
-padding:10px;
-margin:6px 4px;
-border:1px solid #cbd5e1;
-border-radius:8px;
+  padding:10px;
+  margin:6px 4px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
 }
 
 /* TABLE */
-
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th{
-background:#e2e8f0;
-padding:10px;
-text-align:left;
+  background:#e2e8f0;
+  padding:10px;
+  text-align:left;
 }
 td{
-padding:10px;
-border-top:1px solid #e2e8f0;
+  padding:10px;
+  border-top:1px solid #e2e8f0;
 }
 
 /* FOOTER */
-
 footer{
-text-align:center;
-padding:20px;
-color:#64748b;
-font-size:14px;
+  text-align:center;
+  padding:20px;
+  color:#64748b;
+  font-size:14px;
 }
 
 /* RESPONSIVO */
-
 @media(max-width:768px){
-.container{padding:12px}
-.card{padding:14px}
-table,thead,tbody,tr,td,th{font-size:12px}
-button{width:100%;margin-top:8px}
-}
+  .container{padding:12px}
+  .card{padding:14px}
+  table,thead,tbody,tr,td,th{font-size:12px}
+  button{width:100%;margin-top:8px}
 
+  /* Tabelas responsivas */
+  .card > div{
+    overflow-x:auto;
+  }
+  table{
+    display:block;
+    white-space:nowrap;
+  }
+}
 </style>
 </head>
 
@@ -159,25 +157,26 @@ button{width:100%;margin-top:8px}
 
 <!-- LOGIN -->
 <div id="login">
-<div id="loginBox">
-<img src="https://i.imgur.com/u7X1g64.jpeg" class="logo">
-<h2>Sistema Inventário TI</h2>
-<input id="usuario" placeholder="Usuário">
-<input id="senha" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
-</div>
+  <div id="loginBox">
+    <img src="https://i.imgur.com/u7X1g64.jpeg" class="logo">
+    <h2>Sistema Inventário TI</h2>
+    <input id="usuario" placeholder="Usuário">
+    <input id="senha" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+  </div>
 </div>
 
 <!-- APP -->
 <div id="app" style="display:none">
 
 <header>
-<h1>🖥️ Inventário TI</h1>
-<button onclick="logout()">Sair</button>
+  <h1>🖥️ Inventário TI</h1>
+  <button onclick="logout()">Sair</button>
 </header>
 
 <div class="container">
 
+<!-- CADASTRO EQUIPAMENTO -->
 <div class="card">
 <h3>📦 Cadastrar Equipamento</h3>
 <input id="patrimonio" placeholder="Patrimônio">
@@ -185,28 +184,33 @@ button{width:100%;margin-top:8px}
 <input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
 <select id="status">
-<option value="Ativo">Ativo</option>
-<option value="Estoque">Estoque</option>
-<option value="Manutenção">Manutenção</option>
-<option value="Defeito">Defeito</option>
+  <option value="Ativo">Ativo</option>
+  <option value="Estoque">Estoque</option>
+  <option value="Manutenção">Manutenção</option>
+  <option value="Defeito">Defeito</option>
 </select>
 <button onclick="salvarEquipamento()">Salvar</button>
 </div>
 
+<!-- EQUIPAMENTOS -->
 <div class="card">
 <h3>📋 Equipamentos</h3>
+<div>
 <table>
 <thead>
 <tr>
-<th>Patrimônio</th><th>Equipamento</th><th>Qtd</th><th>Loja</th><th>Status</th>
+<th>Patrimônio</th><th>Equipamento</th><th>Qtd</th><th>Loja</th><th>Status</th><th>Ações</th>
 </tr>
 </thead>
 <tbody id="tabelaEquip"></tbody>
 </table>
 </div>
+</div>
 
+<!-- MOVIMENTAÇÕES -->
 <div class="card">
 <h3>🚚 Movimentações</h3>
+<div>
 <table>
 <thead>
 <tr>
@@ -216,7 +220,9 @@ button{width:100%;margin-top:8px}
 <tbody id="tabelaMov"></tbody>
 </table>
 </div>
+</div>
 
+<!-- DASHBOARD -->
 <div class="card">
 <h3>📊 Dashboard</h3>
 <canvas id="grafico"></canvas>
@@ -224,91 +230,172 @@ button{width:100%;margin-top:8px}
 
 </div>
 
-<footer style="text-align:center;padding:22px;color:#64748b;font-size:14px">
+<footer>
 Desenvolvido por <strong style="color:#0f172a">RomTech</strong> • Uso exclusivo
 </footer>
 
 </div>
 
-<!-- FIREBASE / JS (SEU SISTEMA ORIGINAL MANTIDO) -->
+<!-- FIREBASE / JS -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
-authDomain: "romtech-e1e15.firebaseapp.com",
-projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.firebasestorage.app",
-messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
+  apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+  authDomain: "romtech-e1e15.firebaseapp.com",
+  projectId: "romtech-e1e15",
+  storageBucket: "romtech-e1e15.firebasestorage.app",
+  messagingSenderId: "153455301031",
+  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let equipamentos=[]
-let movimentacoes=[]
-let grafico
+let equipamentos = [];
+let movimentacoes = [];
+let grafico;
 
-const loginDiv=document.getElementById("login")
-const appDiv=document.getElementById("app")
+const loginDiv = document.getElementById("login");
+const appDiv = document.getElementById("app");
 
-window.login=function(){
-const u=document.getElementById("usuario").value.trim()
-const s=document.getElementById("senha").value.trim()
-if(!u||!s){alert("Informe usuário e senha");return}
-loginDiv.style.display="none"
-appDiv.style.display="block"
-carregarEquipamentos()
-carregarMov()
+// LOGIN SIMPLES
+window.login = function() {
+  const u = document.getElementById("usuario").value.trim();
+  const s = document.getElementById("senha").value.trim();
+  if (!u || !s) { alert("Informe usuário e senha"); return; }
+  loginDiv.style.display = "none";
+  appDiv.style.display = "block";
+  carregarEquipamentos();
+  carregarMov();
+};
+
+window.logout = function() { location.reload(); }
+
+// SALVAR EQUIPAMENTO
+window.salvarEquipamento = async function() {
+  const patrimonio = document.getElementById("patrimonio").value.trim();
+  const nome = document.getElementById("nome").value.trim();
+  const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
+  const loja = document.getElementById("loja").value.trim();
+  const status = document.getElementById("status").value || "Ativo";
+  
+  if (!patrimonio || !nome || !loja) { alert("Preencha os campos"); return; }
+
+  await addDoc(collection(db, "equipamentos"), { patrimonio, nome, quantidade, loja, status });
+  alert("Salvo com sucesso!");
+  
+  // Limpar campos
+  document.getElementById("patrimonio").value = "";
+  document.getElementById("nome").value = "";
+  document.getElementById("quantidade").value = 1;
+  document.getElementById("loja").value = "";
+  document.getElementById("status").value = "Ativo";
+
+  carregarEquipamentos();
 }
 
-window.logout=function(){location.reload()}
-
-window.salvarEquipamento=async function(){
-const patrimonio=document.getElementById("patrimonio").value.trim()
-const nome=document.getElementById("nome").value.trim()
-const quantidade=parseInt(document.getElementById("quantidade").value)||0
-const loja=document.getElementById("loja").value.trim()
-const status=document.getElementById("status").value||"Ativo"
-if(!patrimonio||!nome||!loja){alert("Preencha os campos");return}
-await addDoc(collection(db,"equipamentos"),{patrimonio,nome,quantidade,loja,status})
-alert("Salvo com sucesso!")
-carregarEquipamentos()
+// CARREGAR EQUIPAMENTOS
+async function carregarEquipamentos() {
+  const snap = await getDocs(collection(db, "equipamentos"));
+  equipamentos = [];
+  let html = "";
+  snap.forEach(docItem => {
+    const e = docItem.data();
+    e.id = docItem.id;
+    equipamentos.push(e);
+    html += `<tr>
+      <td>${e.patrimonio}</td>
+      <td>${e.nome}</td>
+      <td>${e.quantidade}</td>
+      <td>${e.loja}</td>
+      <td>${e.status}</td>
+      <td>
+        <button onclick="editarEquipamento('${e.id}')">✏️</button>
+        <button onclick="excluirEquipamento('${e.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  document.getElementById("tabelaEquip").innerHTML = html;
 }
 
-async function carregarEquipamentos(){
-const snap=await getDocs(collection(db,"equipamentos"))
-equipamentos=[]
-let html=""
-snap.forEach(doc=>{
-const e=doc.data()
-equipamentos.push(e)
-html+=`<tr><td>${e.patrimonio}</td><td>${e.nome}</td><td>${e.quantidade}</td><td>${e.loja}</td><td>${e.status}</td></tr>`
-})
-document.getElementById("tabelaEquip").innerHTML=html
+// EDITAR EQUIPAMENTO
+window.editarEquipamento = async function(id) {
+  const e = equipamentos.find(eq => eq.id === id);
+  if (!e) return;
+  document.getElementById("patrimonio").value = e.patrimonio;
+  document.getElementById("nome").value = e.nome;
+  document.getElementById("quantidade").value = e.quantidade;
+  document.getElementById("loja").value = e.loja;
+  document.getElementById("status").value = e.status;
+
+  const salvarBtn = document.querySelector("button[onclick='salvarEquipamento()']");
+  salvarBtn.onclick = async () => {
+    const patrimonio = document.getElementById("patrimonio").value.trim();
+    const nome = document.getElementById("nome").value.trim();
+    const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
+    const loja = document.getElementById("loja").value.trim();
+    const status = document.getElementById("status").value || "Ativo";
+    await updateDoc(doc(db, "equipamentos", id), { patrimonio, nome, quantidade, loja, status });
+    alert("Atualizado com sucesso!");
+    document.getElementById("patrimonio").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("quantidade").value = 1;
+    document.getElementById("loja").value = "";
+    document.getElementById("status").value = "Ativo";
+    carregarEquipamentos();
+    salvarBtn.onclick = window.salvarEquipamento;
+  };
 }
 
-async function carregarMov(){
-const snap=await getDocs(collection(db,"movimentacoes"))
-movimentacoes=[]
-let html=""
-snap.forEach(doc=>{
-const m=doc.data()
-movimentacoes.push(m)
-html+=`<tr><td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td><td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td></tr>`
-})
-document.getElementById("tabelaMov").innerHTML=html
-graficoDashboard()
+// EXCLUIR EQUIPAMENTO
+window.excluirEquipamento = async function(id) {
+  if (!confirm("Deseja realmente excluir este equipamento?")) return;
+  await deleteDoc(doc(db, "equipamentos", id));
+  
+  // Excluir movimentações relacionadas
+  const snapMov = await getDocs(collection(db, "movimentacoes"));
+  snapMov.forEach(async mDoc => {
+    if (mDoc.data().patrimonio === equipamentos.find(e => e.id === id)?.patrimonio) {
+      await deleteDoc(doc(db, "movimentacoes", mDoc.id));
+    }
+  });
+
+  carregarEquipamentos();
+  carregarMov();
 }
 
-function graficoDashboard(){
-if(grafico)grafico.destroy()
-grafico=new Chart(document.getElementById("grafico"),{
-type:"bar",
-data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}
-})
+// CARREGAR MOVIMENTAÇÕES
+async function carregarMov() {
+  const snap = await getDocs(collection(db, "movimentacoes"));
+  movimentacoes = [];
+  let html = "";
+  snap.forEach(docItem => {
+    const m = docItem.data();
+    movimentacoes.push(m);
+    html += `<tr>
+      <td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td>
+      <td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td>
+    </tr>`;
+  });
+  document.getElementById("tabelaMov").innerHTML = html;
+  graficoDashboard();
+}
+
+// GRÁFICO
+function graficoDashboard() {
+  const statusCount = { Ativo:0, Estoque:0, "Manutenção":0, Defeito:0 };
+  equipamentos.forEach(e => { statusCount[e.status] = (statusCount[e.status]||0)+1; });
+
+  if (grafico) grafico.destroy();
+  grafico = new Chart(document.getElementById("grafico"), {
+    type:"bar",
+    data:{
+      labels:Object.keys(statusCount),
+      datasets:[{label:"Equipamentos por status", data:Object.values(statusCount), backgroundColor:"#2563eb"}]
+    }
+  });
 }
 </script>
 
