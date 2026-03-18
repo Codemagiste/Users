@@ -7,100 +7,22 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
-
-body{
-  background:linear-gradient(135deg,#0f172a,#1e293b);
-  padding:20px;
-  color:#1e293b;
-}
-
-.header{
-  background:#0f172a;
-  color:white;
-  padding:25px;
-  border-radius:12px;
-  margin-bottom:25px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-
-.card{
-  background:white;
-  padding:25px;
-  border-radius:15px;
-  box-shadow:0 8px 30px rgba(0,0,0,0.08);
-  margin-bottom:25px;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-}
-
-input,select,textarea{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
+body{background:linear-gradient(135deg,#0f172a,#1e293b);padding:20px;color:#1e293b;}
+.header{background:#0f172a;color:white;padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.card{background:white;padding:25px;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.08);margin-bottom:25px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;}
+input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;}
 textarea{margin-top:15px;}
-
-button{
-  background:#2563eb;
-  color:white;
-  border:none;
-  padding:12px 18px;
-  border-radius:10px;
-  cursor:pointer;
-  margin-top:15px;
-  font-weight:bold;
-  transition:0.2s;
-}
-
+button{background:#2563eb;color:white;border:none;padding:12px 18px;border-radius:10px;cursor:pointer;margin-top:15px;font-weight:bold;transition:0.2s;}
 button:hover{transform:scale(1.05);}
-
 .btn-green{background:#16a34a;}
 .btn-red{background:#dc2626;}
 .btn-gray{background:#475569;}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-  display:block;
-  overflow-x:auto;
-}
-
-th{
-  background:#0f172a;
-  color:white;
-  padding:14px;
-  text-align:left;
-}
-
-td{
-  padding:12px;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-
-.actions button{
-  margin-right:5px;
-  padding:8px 12px;
-  font-size:12px;
-}
-
-.status{
-  padding:6px 10px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:bold;
-  color:white;
-  text-align:center;
-}
-
+table{width:100%;border-collapse:collapse;margin-top:20px;display:block;overflow-x:auto;}
+th{background:#0f172a;color:white;padding:14px;text-align:left;}
+td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
+.actions button{margin-right:5px;padding:8px 12px;font-size:12px;}
+.status{padding:6px 10px;border-radius:20px;font-size:12px;font-weight:bold;color:white;text-align:center;}
 .em-andamento{background:#f59e0b;}
 .finalizada{background:#2563eb;}
 .entregue{background:#16a34a;}
@@ -115,7 +37,6 @@ td{
 
 <div class="card">
 <form id="formEquipamento">
-
 <div class="form-grid">
 <input type="text" id="loja" placeholder="Loja de Entrada" required>
 <input type="text" id="setor" placeholder="Setor de Recebimento" required>
@@ -125,7 +46,6 @@ td{
 <input type="text" id="equipamento" placeholder="Equipamento" required>
 <input type="text" id="modelo" placeholder="Marca / Modelo">
 <input type="text" id="serie" placeholder="Número de Série">
-
 <select id="status" required>
 <option value="">Status da OS</option>
 <option value="Em andamento">Em andamento</option>
@@ -133,10 +53,8 @@ td{
 <option value="Entregue">Entregue</option>
 </select>
 </div>
-
 <textarea id="defeito" placeholder="Defeito informado"></textarea>
 <button type="submit">📄 Registrar e Gerar OS</button>
-
 </form>
 </div>
 
@@ -163,17 +81,17 @@ td{
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, setDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-// Configuração do Firebase
+// Configuração Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyB5wjNolrTWjDRp8qEqz-gPqplPw3RIzMQ",
-  authDomain: "manutencaoromtech.firebaseapp.com",
-  projectId: "manutencaoromtech",
-  storageBucket: "manutencaoromtech.firebasestorage.app",
-  messagingSenderId: "148127002919",
-  appId: "1:148127002919:web:166c7e0e0252e7d4c47902",
-  measurementId: "G-Y2CZZC0B2G"
+  apiKey: "AIzaSyAnZR2c7R7ANwHITxawvMgjLD08OrNfHxE",
+  authDomain: "manutencaoromtech-ac05f.firebaseapp.com",
+  projectId: "manutencaoromtech-ac05f",
+  storageBucket: "manutencaoromtech-ac05f.firebasestorage.app",
+  messagingSenderId: "1051659351819",
+  appId: "1:1051659351819:web:3fa4d74126691e381d540e",
+  measurementId: "G-N19R0B56GF"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -182,19 +100,19 @@ const ordensCollection = collection(db, "ordens");
 
 let contadorOS = 0;
 
-// Gera número de OS
+// Gera número da OS
 function gerarNumeroOS() {
   contadorOS++;
   return new Date().getFullYear() + "-" + String(contadorOS).padStart(4,"0");
 }
 
-// Função para renderizar tabela
+// Renderiza tabela
 async function renderTabela() {
   const tbody = document.querySelector("#tabela tbody");
   tbody.innerHTML = "";
 
   const querySnapshot = await getDocs(ordensCollection);
-  querySnapshot.forEach((docSnap) => {
+  querySnapshot.forEach(docSnap => {
     const d = docSnap.data();
     const id = docSnap.id;
 
@@ -205,16 +123,16 @@ async function renderTabela() {
     linha.insertCell().textContent = d.equipamento;
     linha.insertCell().textContent = d.tecnico;
 
-    let classeStatus="";
-    if(d.status==="Em andamento") classeStatus="em-andamento";
-    if(d.status==="Finalizada") classeStatus="finalizada";
-    if(d.status==="Entregue") classeStatus="entregue";
+    let classeStatus = "";
+    if(d.status === "Em andamento") classeStatus = "em-andamento";
+    if(d.status === "Finalizada") classeStatus = "finalizada";
+    if(d.status === "Entregue") classeStatus = "entregue";
 
-    linha.insertCell().innerHTML=`<span class="status ${classeStatus}">${d.status}</span>`;
+    linha.insertCell().innerHTML = `<span class="status ${classeStatus}">${d.status}</span>`;
 
-    const acao=linha.insertCell();
+    const acao = linha.insertCell();
     acao.classList.add("actions");
-    acao.innerHTML=`
+    acao.innerHTML = `
       <button class="btn-green" onclick='gerarComprovante("${id}")'>🖨</button>
       <button class="btn-gray" onclick='alterarStatus("${id}")'>🔄</button>
       <button class="btn-red" onclick='excluirOS("${id}")'>🗑</button>
@@ -225,7 +143,6 @@ async function renderTabela() {
 // Registrar OS
 document.getElementById("formEquipamento").addEventListener("submit", async function(e){
   e.preventDefault();
-
   const dados = {
     os: gerarNumeroOS(),
     data: new Date().toLocaleString(),
@@ -241,7 +158,7 @@ document.getElementById("formEquipamento").addEventListener("submit", async func
     status: document.getElementById("status").value
   };
 
-  await addDoc(ordensCollection, dados);
+  await setDoc(doc(db, "ordens", dados.os), dados); // ID = número da OS
   renderTabela();
   this.reset();
   alert("OS registrada com sucesso!");
@@ -255,26 +172,23 @@ async function alterarStatus(id) {
   if(novoStatus==="2") statusText="Finalizada";
   if(novoStatus==="3") statusText="Entregue";
   if(!statusText) return;
-
-  const docRef = doc(db, "ordens", id);
-  await updateDoc(docRef, { status: statusText });
+  await updateDoc(doc(db, "ordens", id), { status: statusText });
   renderTabela();
 }
 
 // Excluir OS
 async function excluirOS(id) {
   if(confirm("Deseja realmente excluir esta OS?")) {
-    const docRef = doc(db, "ordens", id);
-    await deleteDoc(docRef);
+    await deleteDoc(doc(db, "ordens", id));
     renderTabela();
   }
 }
 
 // Gerar comprovante
 async function gerarComprovante(id) {
-  const docSnap = await getDocs(ordensCollection);
+  const querySnapshot = await getDocs(ordensCollection);
   let dados = null;
-  docSnap.forEach(d => { if(d.id===id) dados=d.data(); });
+  querySnapshot.forEach(d => { if(d.id===id) dados = d.data(); });
   if(!dados) return alert("OS não encontrada");
 
   const janela = window.open("","_blank","width=500,height=700");
