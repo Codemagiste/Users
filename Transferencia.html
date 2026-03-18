@@ -2,64 +2,112 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Inventário TI</title>
+<title>Inventário TI PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+:root{
+--bg:#0b1220;
+--card:#111827;
+--soft:#1f2937;
+--accent:#3b82f6;
+--accent2:#2563eb;
+--text:#e5e7eb;
+--muted:#9ca3af;
+--ok:#10b981;
+}
+
+*{box-sizing:border-box}
 
 body{
-font-family:Arial;
+font-family:'Segoe UI',Roboto,Arial,sans-serif;
 margin:0;
-background:#f1f5f9;
+background:linear-gradient(135deg,#0b1220,#0e1a2f);
+color:var(--text);
 }
 
 header{
-background:#0f172a;
-color:white;
-padding:15px;
+background:rgba(17,24,39,.85);
+backdrop-filter:blur(8px);
+border-bottom:1px solid #1f2937;
+color:#fff;
+padding:18px 24px;
 font-size:20px;
+letter-spacing:.5px;
+box-shadow:0 4px 20px rgba(0,0,0,.25);
 }
 
-.container{
-padding:20px;
+.container{padding:24px;max-width:1400px;margin:auto}
+
+input,select{
+padding:10px 12px;
+margin:6px;
+background:var(--soft);
+border:1px solid #374151;
+border-radius:8px;
+color:var(--text);
+outline:none;
+transition:.2s;
 }
 
-input,select,button{
-padding:8px;
-margin:4px;
-}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.2)}
 
 button{
-background:#2563eb;
-color:white;
+padding:10px 14px;
+margin:6px;
 border:none;
-border-radius:4px;
+border-radius:8px;
 cursor:pointer;
+font-weight:600;
+letter-spacing:.3px;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+color:#fff;
+box-shadow:0 4px 14px rgba(37,99,235,.35);
+transition:transform .15s, box-shadow .15s, filter .2s;
 }
 
-button:hover{
-background:#1d4ed8;
-}
+button:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(37,99,235,.45);filter:brightness(1.05)}
+button:active{transform:translateY(0)}
+
+.table-wrapper{overflow:auto;border-radius:12px}
 
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
+background:var(--card);
+border-radius:12px;
+overflow:hidden;
 }
 
-th,td{
-border:1px solid #ddd;
-padding:8px;
+th{
+background:#0f172a;
+color:#cbd5e1;
+font-weight:600;
+font-size:13px;
+text-transform:uppercase;
+letter-spacing:.6px;
 }
+
+th,td{border-bottom:1px solid #1f2937;padding:10px}
+tr:hover td{background:#0f1b31}
 
 .card{
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:8px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+background:rgba(17,24,39,.9);
+border:1px solid #1f2937;
+padding:18px;
+margin:16px 0;
+border-radius:16px;
+box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+
+.card h3{
+margin-top:0;
+font-weight:600;
+letter-spacing:.4px;
+color:#fff;
 }
 
 #login{
@@ -67,70 +115,73 @@ display:flex;
 height:100vh;
 align-items:center;
 justify-content:center;
-background:#0f172a;
-color:white;
+background:radial-gradient(circle at 30% 20%,#1d4ed8,transparent 40%),radial-gradient(circle at 80% 70%,#2563eb,transparent 40%),#0b1220;
 }
 
 #loginBox{
-background:#1e293b;
-padding:40px;
-border-radius:10px;
+background:rgba(17,24,39,.95);
+padding:44px;
+border-radius:20px;
+box-shadow:0 20px 60px rgba(0,0,0,.45);
+border:1px solid #1f2937;
+text-align:center;
 }
 
+#loginBox h2{margin-top:0;font-weight:600;letter-spacing:.5px}
+
+canvas{background:#0f172a;border-radius:14px;padding:10px}
+
+footer{
+margin-top:40px;
+text-align:center;
+padding:28px;
+color:var(--muted);
+font-size:13px;
+letter-spacing:.4px;
+border-top:1px solid #1f2937;
+background:rgba(15,23,42,.6);
+}
 </style>
 </head>
 
 <body>
 
 <div id="login">
-
-<div id="loginBox">
-
-<h2>Sistema Inventário TI</h2>
-
-<input id="usuario" placeholder="Usuário"><br>
-<input id="senha" type="password" placeholder="Senha"><br>
-
-<button onclick="login()">Entrar</button>
-
-</div>
+  <div id="loginBox">
+    <h2>Sistema Inventário TI</h2>
+    <input id="usuario" placeholder="Usuário"><br>
+    <input id="senha" type="password" placeholder="Senha"><br>
+    <button onclick="login()">Entrar</button>
+  </div>
 </div>
 
 <div id="app" style="display:none">
-
 <header>
-Inventário TI
+Inventário TI PRO
+<button onclick="backupDados()" style="float:right;margin-left:10px">Backup</button>
 <button onclick="logout()" style="float:right">Sair</button>
 </header>
 
 <div class="container">
 
 <div class="card">
-
 <h3>Cadastrar Equipamento</h3>
-
 <input id="patrimonio" placeholder="Patrimônio">
 <input id="nome" placeholder="Equipamento">
 <input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
-
 <select id="status">
 <option>Ativo</option>
 <option>Estoque</option>
 <option>Manutenção</option>
 <option>Defeito</option>
 </select>
-
 <button onclick="salvarEquipamento()">Salvar</button>
-
 </div>
 
 <div class="card">
-
 <h3>Equipamentos</h3>
-
 <table>
-
 <thead>
 <tr>
 <th>Patrimônio</th>
@@ -138,33 +189,25 @@ Inventário TI
 <th>Qtd</th>
 <th>Loja</th>
 <th>Status</th>
+<th>Etiqueta</th>
+<th>Histórico</th>
 </tr>
 </thead>
-
 <tbody id="tabelaEquip"></tbody>
-
 </table>
-
 </div>
 
 <div class="card">
-
 <h3>Transferência</h3>
-
 <input id="patTransfer" placeholder="Patrimônio">
 <input id="destino" placeholder="Destino">
 <input id="responsavel" placeholder="Responsável">
-
 <button onclick="transferir()">Transferir</button>
-
 </div>
 
 <div class="card">
-
-<h3>Movimentações</h3>
-
+<h3>Movimentações <button onclick="gerarPDF()">Gerar Relatório PDF</button></h3>
 <table>
-
 <thead>
 <tr>
 <th>Tipo</th>
@@ -176,35 +219,53 @@ Inventário TI
 <th>Data</th>
 </tr>
 </thead>
-
 <tbody id="tabelaMov"></tbody>
-
 </table>
-
 </div>
 
 <div class="card">
-
 <h3>Dashboard</h3>
-
 <canvas id="grafico"></canvas>
-
 </div>
 
 </div>
+</div>
+
+<!-- Etiqueta -->
+<div id="etiqueta" style="display:none">
+  <div id="conteudoEtiqueta" style="width:300px;padding:10px;font-family:Arial">
+    <h3>Inventário TI</h3>
+    <p id="etqPat"></p>
+    <p id="etqNome"></p>
+    <div id="qrcode"></div>
+  </div>
+</div>
+
+<!-- Histórico Modal -->
+<div id="modalHist" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6)">
+  <div style="background:#fff;width:700px;margin:40px auto;padding:20px;border-radius:8px">
+    <h3>Histórico do Equipamento</h3>
+    <table width="100%" border="1" cellspacing="0" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Origem</th>
+          <th>Destino</th>
+          <th>Status</th>
+          <th>Responsável</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="histConteudo"></tbody>
+    </table>
+    <br>
+    <button onclick="fecharHistorico()">Fechar</button>
+  </div>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-
-import {
-getFirestore,
-collection,
-addDoc,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
@@ -212,9 +273,7 @@ authDomain: "romtech-e1e15.firebaseapp.com",
 projectId: "romtech-e1e15",
 storageBucket: "romtech-e1e15.firebasestorage.app",
 messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682",
-measurementId: "G-1DBYYTTXM4"
-
+appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
 };
 
 const appFirebase = initializeApp(firebaseConfig);
@@ -224,178 +283,128 @@ let equipamentos=[]
 let movimentacoes=[]
 let grafico
 
-// ELEMENTOS DOM
-const loginDiv = document.getElementById("login")
-const appDiv = document.getElementById("app")
+const loginDiv=document.getElementById("login")
+const appDiv=document.getElementById("app")
 
-// LOGIN
-function login(){
+function login(){loginDiv.style.display="none";appDiv.style.display="block";carregarEquipamentos();carregarMov()}
+function logout(){location.reload()}
+window.login=login;window.logout=logout
 
-const user=document.getElementById("usuario").value
-const pass=document.getElementById("senha").value
-
-if(user==="" || pass===""){
-alert("Informe usuário e senha")
-return
-}
-
-loginDiv.style.display="none"
-appDiv.style.display="block"
-
-carregarEquipamentos()
-carregarMov()
-
-}
-
-window.login=login
-
-function logout(){
-location.reload()
-}
-
-window.logout=logout
-
-// SALVAR EQUIPAMENTO
 async function salvarEquipamento(){
-
-const patrimonio=document.getElementById("patrimonio").value
-const nome=document.getElementById("nome").value
+const patrimonio=patrimonio.value
+const nome=nome.value
 const quantidade=parseInt(document.getElementById("quantidade").value)
-const loja=document.getElementById("loja").value
-const status=document.getElementById("status").value
+const loja=loja.value
+const status=status.value
 
-await addDoc(collection(db,"equipamentos"),{
-patrimonio,
-nome,
-quantidade,
-loja,
-status
-})
+await addDoc(collection(db,"equipamentos"),{patrimonio,nome,quantidade,loja,status})
 
+patrimonio.value="";nome.value="";quantidade.value=1;loja.value=""
 carregarEquipamentos()
-
 }
-
 window.salvarEquipamento=salvarEquipamento
 
-// CARREGAR EQUIPAMENTOS
 async function carregarEquipamentos(){
-
-const querySnapshot = await getDocs(collection(db,"equipamentos"))
-
-equipamentos=[]
-let html=""
-
-querySnapshot.forEach((doc)=>{
-
-const e=doc.data()
-
-equipamentos.push(e)
-
-html+=`
-<tr>
+const snap=await getDocs(collection(db,"equipamentos"))
+equipamentos=[];let html=""
+snap.forEach(doc=>{const e=doc.data();equipamentos.push(e)
+html+=`<tr>
 <td>${e.patrimonio}</td>
 <td>${e.nome}</td>
 <td>${e.quantidade}</td>
 <td>${e.loja}</td>
 <td>${e.status}</td>
-</tr>
-`
-
-})
+<td><button onclick="imprimirEtiqueta('${e.patrimonio}','${e.nome}')">Etiqueta</button></td>
+<td><button onclick="verHistorico('${e.patrimonio}')">Ver</button></td>
+</tr>`})
 
 document.getElementById("tabelaEquip").innerHTML=html
-
 }
 
-// TRANSFERIR
 async function transferir(){
-
-const pat=document.getElementById("patTransfer").value
-const dest=document.getElementById("destino").value
-const resp=document.getElementById("responsavel").value
-
+const pat=patTransfer.value
+const dest=destino.value
+const resp=responsavel.value
 const eq=equipamentos.find(e=>e.patrimonio==pat)
+if(!eq||eq.quantidade<=0){alert("Estoque indisponível");return}
 
-if(!eq){
-alert("Equipamento não encontrado")
-return
+await addDoc(collection(db,"movimentacoes"),{
+tipo:"Transferência",patrimonio:eq.patrimonio,origem:eq.loja,destino:dest,status:"Concluído",responsavel:resp,data:new Date().toLocaleString()
+})
+
+patTransfer.value="";destino.value="";responsavel.value=""
+carregarMov();alert("Transferência realizada")
 }
-
-const mov={
-tipo:"Transferência",
-patrimonio:eq.patrimonio,
-origem:eq.loja,
-destino:dest,
-status:"Em transporte",
-responsavel:resp,
-data:new Date().toLocaleString()
-}
-
-await addDoc(collection(db,"movimentacoes"),mov)
-
-carregarMov()
-carregarEquipamentos()
-
-}
-
 window.transferir=transferir
 
-// CARREGAR MOVIMENTAÇÕES
 async function carregarMov(){
-
-const querySnapshot = await getDocs(collection(db,"movimentacoes"))
-
-movimentacoes=[]
-let html=""
-
-querySnapshot.forEach((doc)=>{
-
-const m=doc.data()
-
-movimentacoes.push(m)
-
-html+=`
-<tr>
-<td>${m.tipo}</td>
-<td>${m.patrimonio}</td>
-<td>${m.origem}</td>
-<td>${m.destino}</td>
-<td>${m.status}</td>
-<td>${m.responsavel}</td>
-<td>${m.data}</td>
-</tr>
-`
-
-})
+const snap=await getDocs(collection(db,"movimentacoes"))
+movimentacoes=[];let html=""
+snap.forEach(doc=>{const m=doc.data();movimentacoes.push(m)
+html+=`<tr><td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td><td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td></tr>`})
 
 document.getElementById("tabelaMov").innerHTML=html
 
 graficoDashboard()
-
 }
 
-// DASHBOARD
 function graficoDashboard(){
-
 if(grafico)grafico.destroy()
+const porStatus={}
+equipamentos.forEach(e=>porStatus[e.status]=(porStatus[e.status]||0)+1)
 
-grafico=new Chart(
-document.getElementById("grafico"),
-{
+grafico=new Chart(document.getElementById("grafico"),{
 type:"bar",
-data:{
-labels:["Movimentações"],
-datasets:[{
-label:"Total",
-data:[movimentacoes.length]
-}]
-}
+data:{labels:Object.keys(porStatus),datasets:[{label:"Equipamentos",data:Object.values(porStatus)}]}
 })
-
 }
+
+function verHistorico(pat){
+let html=""
+movimentacoes.filter(m=>m.patrimonio==pat).forEach(m=>{
+html+=`<tr><td>${m.tipo}</td><td>${m.origem}</td><td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td></tr>`})
+histConteudo.innerHTML=html
+modalHist.style.display="block"
+}
+function fecharHistorico(){modalHist.style.display="none"}
+window.verHistorico=verHistorico;window.fecharHistorico=fecharHistorico
+
+function imprimirEtiqueta(patrimonio,nome){
+etqPat.innerText="Patrimônio: "+patrimonio
+etqNome.innerText="Equipamento: "+nome
+qrcode.innerHTML=""
+QRCode.toCanvas(patrimonio,{width:120},(err,canvas)=>{
+qrcode.appendChild(canvas)
+const conteudo=conteudoEtiqueta.innerHTML
+const win=window.open("","","width=400,height=600")
+win.document.write(conteudo);win.document.close();win.print();win.close()
+})}
+window.imprimirEtiqueta=imprimirEtiqueta
+
+async function gerarPDF(){
+const { jsPDF } = window.jspdf
+const doc=new jsPDF()
+doc.text("Relatório de Movimentações",20,20)
+let y=40
+movimentacoes.forEach((m,i)=>{doc.text(`${i+1}. ${m.patrimonio} | ${m.origem} → ${m.destino} | ${m.responsavel} | ${m.data}`,20,y);y+=8;if(y>280){doc.addPage();y=20}})
+doc.save("relatorio.pdf")
+}
+window.gerarPDF=gerarPDF
+
+function backupDados(){
+const dados={equipamentos,movimentacoes,backup:new Date().toLocaleString()}
+const blob=new Blob([JSON.stringify(dados,null,2)],{type:"application/json"})
+const url=URL.createObjectURL(blob)
+const a=document.createElement("a");a.href=url;a.download="backup.json";a.click();URL.revokeObjectURL(url)
+alert("Backup concluído")
+}
+window.backupDados=backupDados
 
 </script>
+
+<footer style="text-align:center;padding:20px;color:#64748b;font-size:14px">
+Desenvolvido por RomTech — Uso exclusivo
+</footer>
 
 </body>
 </html>
