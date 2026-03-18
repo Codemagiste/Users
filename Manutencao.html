@@ -118,7 +118,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const ordensCollection = collection(db,"ordens");
-
 let contadorOS = 0;
 
 // --- Login ---
@@ -144,9 +143,6 @@ document.getElementById("btnLogin").addEventListener("click",()=>{
   .then(()=>{loginDiv.style.display="none"; mainDiv.style.display="block"; renderTabela();})
   .catch(error=>msg.textContent="Erro: "+error.message);
 });
-
-// Logout
-function logout(){ signOut(auth).then(()=>{loginDiv.style.display="flex"; mainDiv.style.display="none";}); }
 
 // --- OS Functions ---
 function gerarNumeroOS(){ contadorOS++; return new Date().getFullYear()+"-"+String(contadorOS).padStart(4,"0"); }
@@ -179,7 +175,6 @@ async function renderTabela(){
   });
 }
 
-// Registrar OS
 document.getElementById("formEquipamento").addEventListener("submit",async function(e){
   e.preventDefault();
   const dados={
@@ -222,13 +217,14 @@ async function excluirOS(id){
   }
 }
 
-// Comprovante
+// Gerar comprovante
 async function gerarComprovante(id){
-  const querySnapshot = await getDocs(ordensCollection);
+  const docRef = doc(db,"ordens",id);
+  const docSnap = await getDocs(ordensCollection);
   let dados = null;
-  querySnapshot.forEach(d=>{if(d.id===id) dados=d.data();});
+  docSnap.forEach(d => {if(d.id===id) dados=d.data();});
   if(!dados) return alert("OS não encontrada");
-  const janela=window.open("","_blank","width=500,height=700");
+  const janela = window.open("","_blank","width=500,height=700");
   janela.document.write(`
     <style>
       body{font-family:Arial;padding:20px;margin:0;}
@@ -258,6 +254,13 @@ async function gerarComprovante(id){
   `);
   janela.print();
 }
+
+// --- Tornar funções globais para onclick inline ---
+window.gerarComprovante = gerarComprovante;
+window.alterarStatus = alterarStatus;
+window.excluirOS = excluirOS;
+window.logout = logout;
+
 </script>
 
 </body>
