@@ -5,126 +5,24 @@
 <title>Inventário TI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 
 <style>
 *{box-sizing:border-box}
-
-body{
-font-family:'Segoe UI',Arial,sans-serif;
-margin:0;
-background:#f3f6fb;
-color:#1f2937;
-}
-
-header{
-background:linear-gradient(90deg,#0f172a,#1e293b);
-color:white;
-padding:16px 24px;
-font-size:20px;
-font-weight:600;
-display:flex;
-align-items:center;
-justify-content:space-between;
-box-shadow:0 2px 10px rgba(0,0,0,.15);
-}
-
-header button{
-background:#ef4444;
-padding:8px 14px;
-border-radius:6px;
-border:none;
-color:white;
-cursor:pointer;
-}
-
-.container{
-padding:24px;
-max-width:1200px;
-margin:auto;
-}
-
-.card{
-background:white;
-padding:18px;
-margin:18px 0;
-border-radius:12px;
-box-shadow:0 4px 18px rgba(0,0,0,.08);
-}
-
-input,select{
-padding:10px;
-margin:6px 4px;
-border-radius:6px;
-border:1px solid #d1d5db;
-min-width:160px;
-}
-
-button{
-background:linear-gradient(180deg,#16a34a,#15803d);
-color:white;
-border:none;
-border-radius:8px;
-padding:10px 18px;
-cursor:pointer;
-font-weight:600;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-border-radius:10px;
-overflow:hidden;
-}
-
-th{
-background:#0f172a;
-color:white;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #e5e7eb;
-text-align:center;
-}
-
-#login{
-display:flex;
-height:100vh;
-align-items:center;
-justify-content:center;
-background:linear-gradient(135deg,#0f172a,#1e293b);
-color:white;
-}
-
-#loginBox{
-background:white;
-color:#111827;
-padding:40px;
-border-radius:14px;
-width:100%;
-max-width:360px;
-text-align:center;
-}
-
-#loginBox input{
-width:100%;
-margin:8px 0;
-}
-
-@media (max-width:600px){
-input,select,button{width:100%;margin:6px 0}
-th,td{font-size:13px;padding:8px}
-}
-
-footer{
-text-align:center;
-padding:18px;
-color:#6b7280;
-font-size:13px;
-}
+body{font-family:'Segoe UI',Arial;margin:0;background:#f3f6fb;color:#1f2937}
+header{background:linear-gradient(90deg,#0f172a,#1e293b);color:white;padding:16px 24px;font-size:20px;font-weight:600;display:flex;justify-content:space-between}
+.container{padding:24px;max-width:1200px;margin:auto}
+.card{background:white;padding:18px;margin:18px 0;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+input,select{padding:10px;margin:6px;border-radius:6px;border:1px solid #d1d5db}
+button{background:linear-gradient(180deg,#16a34a,#15803d);color:white;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:600}
+table{width:100%;border-collapse:collapse;background:white}
+th{background:#0f172a;color:white}
+th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:center}
+#login{display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#1e293b)}
+#loginBox{background:white;padding:40px;border-radius:14px;width:100%;max-width:360px;text-align:center}
+#loginBox input{width:100%;margin:8px 0}
+@media (max-width:600px){input,select,button{width:100%;margin:6px 0}}
+footer{text-align:center;padding:18px;color:#6b7280;font-size:13px}
 </style>
 </head>
 
@@ -133,17 +31,16 @@ font-size:13px;
 <div id="login">
 <div id="loginBox">
 <h2>Sistema Inventário TI</h2>
-<input id="usuario" placeholder="Usuário"><br>
-<input id="senha" type="password" placeholder="Senha"><br>
-<button onclick="login()">Entrar</button>
+<input id="usuario" placeholder="Usuário">
+<input id="senha" type="password" placeholder="Senha">
+<button id="btnLogin">Entrar</button>
 </div>
 </div>
 
 <div id="app" style="display:none">
-
 <header>
 <span>💼 Inventário TI Corporativo</span>
-<button onclick="logout()">Sair</button>
+<button id="btnLogout">Sair</button>
 </header>
 
 <div class="container">
@@ -155,27 +52,16 @@ font-size:13px;
 <input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
 <select id="status">
-<option>Ativo</option>
-<option>Estoque</option>
-<option>Manutenção</option>
-<option>Defeito</option>
+<option>Ativo</option><option>Estoque</option><option>Manutenção</option><option>Defeito</option>
 </select>
-<button onclick="salvarEquipamento()">Salvar</button>
+<button id="btnSalvar">Salvar</button>
 </div>
 
 <div class="card">
 <h3>Equipamentos</h3>
-<button onclick="gerarPDF()">Gerar PDF</button>
+<button id="btnPDF">Gerar PDF</button>
 <table>
-<thead>
-<tr>
-<th>Patrimônio</th>
-<th>Equipamento</th>
-<th>Qtd</th>
-<th>Loja</th>
-<th>Status</th>
-</tr>
-</thead>
+<thead><tr><th>Patrimônio</th><th>Equipamento</th><th>Qtd</th><th>Loja</th><th>Status</th></tr></thead>
 <tbody id="tabelaEquip"></tbody>
 </table>
 </div>
@@ -185,23 +71,13 @@ font-size:13px;
 <input id="patTransfer" placeholder="Patrimônio">
 <input id="destino" placeholder="Destino">
 <input id="responsavel" placeholder="Responsável">
-<button onclick="transferir()">Transferir</button>
+<button id="btnTransferir">Transferir</button>
 </div>
 
 <div class="card">
 <h3>Movimentações</h3>
 <table>
-<thead>
-<tr>
-<th>Tipo</th>
-<th>Patrimônio</th>
-<th>Origem</th>
-<th>Destino</th>
-<th>Status</th>
-<th>Responsável</th>
-<th>Data</th>
-</tr>
-</thead>
+<thead><tr><th>Tipo</th><th>Patrimônio</th><th>Origem</th><th>Destino</th><th>Status</th><th>Responsável</th><th>Data</th></tr></thead>
 <tbody id="tabelaMov"></tbody>
 </table>
 </div>
@@ -214,130 +90,86 @@ font-size:13px;
 </div>
 </div>
 
-<footer>
-Desenvolvido por <strong>RomTech</strong> • Uso exclusivo
-</footer>
+<footer>Desenvolvido por <strong>RomTech</strong> • Uso exclusivo</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
-authDomain: "romtech-e1e15.firebaseapp.com",
-projectId: "romtech-e1e15",
-storageBucket: "romtech-e1e15.firebasestorage.app",
-messagingSenderId: "153455301031",
-appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
+apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
+authDomain:"romtech-e1e15.firebaseapp.com",
+projectId:"romtech-e1e15",
+storageBucket:"romtech-e1e15.firebasestorage.app",
+messagingSenderId:"153455301031",
+appId:"1:153455301031:web:6933f2bc3f6e485c2f2682"
 };
 
 const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 
-let equipamentos=[]
-let movimentacoes=[]
-let grafico
+let equipamentos=[], movimentacoes=[], grafico;
 
-function login(){
+const loginDiv=document.getElementById("login");
+const appDiv=document.getElementById("app");
+
+document.getElementById("btnLogin").onclick=()=>{
 if(!usuario.value||!senha.value){alert("Informe usuário e senha");return}
-login.style.display="none"
-app.style.display="block"
-carregarEquipamentos()
-carregarMov()
-}
-window.login=login
+loginDiv.style.display="none";appDiv.style.display="block";
+carregarEquipamentos();carregarMov();
+};
 
-function logout(){location.reload()}
-window.logout=logout
+document.getElementById("btnLogout").onclick=()=>location.reload();
 
-async function salvarEquipamento(){
-const patrimonio=document.getElementById("patrimonio").value
-const nome=document.getElementById("nome").value
-const quantidade=parseInt(document.getElementById("quantidade").value)
-const loja=document.getElementById("loja").value
-const status=document.getElementById("status").value
-
-await addDoc(collection(db,"equipamentos"),{patrimonio,nome,quantidade,loja,status})
-
-document.getElementById("patrimonio").value=""
-document.getElementById("nome").value=""
-document.getElementById("quantidade").value=1
-document.getElementById("loja").value=""
-
-carregarEquipamentos()
-}
-window.salvarEquipamento=salvarEquipamento
+document.getElementById("btnSalvar").onclick=async()=>{
+await addDoc(collection(db,"equipamentos"),{
+patrimonio:patrimonio.value,nome:nome.value,
+quantidade:parseInt(quantidade.value),loja:loja.value,status:status.value
+});
+patrimonio.value="";nome.value="";quantidade.value=1;loja.value="";
+carregarEquipamentos();alert("Salvo!");
+};
 
 async function carregarEquipamentos(){
-const snap=await getDocs(collection(db,"equipamentos"))
-equipamentos=[]
-let html=""
-snap.forEach(doc=>{
-const e=doc.data()
-equipamentos.push(e)
-html+=`<tr>
-<td>${e.patrimonio}</td>
-<td>${e.nome}</td>
-<td>${e.quantidade}</td>
-<td>${e.loja}</td>
-<td>${e.status}</td>
-</tr>`
-})
-tabelaEquip.innerHTML=html
+const snap=await getDocs(collection(db,"equipamentos"));
+equipamentos=[];let html="";
+snap.forEach(doc=>{const e=doc.data();equipamentos.push(e);
+html+=`<tr><td>${e.patrimonio}</td><td>${e.nome}</td><td>${e.quantidade}</td><td>${e.loja}</td><td>${e.status}</td></tr>`});
+tabelaEquip.innerHTML=html;
 }
 
-async function transferir(){
-const eq=equipamentos.find(e=>e.patrimonio==patTransfer.value)
+document.getElementById("btnTransferir").onclick=async()=>{
+const eq=equipamentos.find(e=>e.patrimonio==patTransfer.value);
 if(!eq){alert("Equipamento não encontrado");return}
 await addDoc(collection(db,"movimentacoes"),{
-tipo:"Transferência",
-patrimonio:eq.patrimonio,
-origem:eq.loja,
-destino:destino.value,
-status:"Em transporte",
-responsavel:responsavel.value,
+tipo:"Transferência",patrimonio:eq.patrimonio,origem:eq.loja,
+destino:destino.value,status:"Em transporte",responsavel:responsavel.value,
 data:new Date().toLocaleString()
-})
-carregarMov()
-}
-window.transferir=transferir
+});
+carregarMov();
+};
 
 async function carregarMov(){
-const snap=await getDocs(collection(db,"movimentacoes"))
-movimentacoes=[]
-let html=""
-snap.forEach(doc=>{
-const m=doc.data()
-movimentacoes.push(m)
-html+=`<tr>
-<td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td>
-<td>${m.destino}</td><td>${m.status}</td>
-<td>${m.responsavel}</td><td>${m.data}</td></tr>`
-})
-tabelaMov.innerHTML=html
-graficoDashboard()
+const snap=await getDocs(collection(db,"movimentacoes"));
+movimentacoes=[];let html="";
+snap.forEach(doc=>{const m=doc.data();movimentacoes.push(m);
+html+=`<tr><td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td><td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td></tr>`});
+tabelaMov.innerHTML=html;graficoDashboard();
 }
 
 function graficoDashboard(){
-if(grafico)grafico.destroy()
+if(grafico)grafico.destroy();
 grafico=new Chart(document.getElementById("grafico"),{
-type:"bar",
-data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}
-})
+type:"bar",data:{labels:["Movimentações"],datasets:[{label:"Total",data:[movimentacoes.length]}]}
+});
 }
 
-function gerarPDF(){
-const { jsPDF } = window.jspdf
-const pdf = new jsPDF()
-pdf.text("Relatório de Equipamentos",20,20)
-let y=40
-equipamentos.forEach((e,i)=>{
-pdf.text(`${i+1}. ${e.patrimonio} - ${e.nome} - Qtd:${e.quantidade} - ${e.loja} - ${e.status}`,20,y)
-y+=10
-})
-pdf.save("relatorio-equipamentos.pdf")
-}
-window.gerarPDF=gerarPDF
+document.getElementById("btnPDF").onclick=()=>{
+const { jsPDF }=window.jspdf;const pdf=new jsPDF();
+pdf.text("Relatório de Equipamentos",20,20);let y=40;
+equipamentos.forEach((e,i)=>{pdf.text(`${i+1}. ${e.patrimonio} - ${e.nome} - Qtd:${e.quantidade}`,20,y);y+=10});
+pdf.save("relatorio.pdf");
+};
 </script>
 
 </body>
