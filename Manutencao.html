@@ -4,267 +4,143 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Manutenção</title>
-<style>
-/* Geral */
-*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
-body{background:linear-gradient(135deg,#0f172a,#1e293b);color:#1e293b;padding:20px;}
-.header{background:#0f172a;color:white;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 8px 20px rgba(0,0,0,0.2);display:flex;justify-content:space-between;align-items:center;}
-.card{background:white;padding:20px;border-radius:15px;box-shadow:0 6px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;}
-input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;}
-textarea{margin-top:15px;}
-button{background:#2563eb;color:white;border:none;padding:12px 18px;border-radius:10px;cursor:pointer;margin-top:15px;font-weight:bold;transition:0.2s;}
-button:hover{transform:scale(1.05);}
-.btn-green{background:#16a34a;}
-.btn-red{background:#dc2626;}
-.btn-gray{background:#475569;}
-table{width:100%;border-collapse:collapse;margin-top:20px;display:block;overflow-x:auto;}
-th{background:#0f172a;color:white;padding:14px;text-align:left;}
-td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
-.actions button{margin-right:5px;padding:8px 12px;font-size:12px;}
-.status{padding:6px 10px;border-radius:20px;font-size:12px;font-weight:bold;color:white;text-align:center;}
-.em-andamento{background:#f59e0b;}
-.finalizada{background:#2563eb;}
-.entregue{background:#16a34a;}
-.logout-btn{background:#dc2626;padding:8px 12px;}
-.login-container{display:flex;justify-content:center;align-items:center;height:100vh;background:#1e293b;}
-.login-card{background:white;padding:30px;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.2);width:320px;}
-.login-card input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #d1d5db;font-size:14px;}
-.login-card button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#2563eb;color:white;font-weight:bold;cursor:pointer;transition:0.2s;}
-.login-card button:hover{transform:scale(1.05);}
-.login-card p{font-size:14px;text-align:center;margin-top:10px;color:red;}
-</style>
 </head>
-
 <body>
-
-<!-- Login -->
-<div id="loginDiv" class="login-container">
-  <div class="login-card">
-    <h2 style="text-align:center;">🔑 Login</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="senha" placeholder="Senha" required>
-    <button id="btnLogin">Entrar</button>
-    <p id="msg"></p>
-  </div>
-</div>
-
-<!-- Sistema OS -->
-<div id="mainDiv" style="display:none;">
-  <div class="header">
-    <h1>📦 Sistema de Entrada de Equipamentos</h1>
-    <button class="btn-gray logout-btn" onclick="logout()">🚪 Logout</button>
-  </div>
-
-  <div class="card">
-    <form id="formEquipamento">
-      <div class="form-grid">
-        <input type="text" id="loja" placeholder="Loja de Entrada" required>
-        <input type="text" id="setor" placeholder="Setor de Recebimento" required>
-        <input type="text" id="ticket" placeholder="Ticket Milvus" required>
-        <input type="text" id="tecnico" placeholder="Técnico Responsável" required>
-        <input type="text" id="cliente" placeholder="Nome do Cliente" required>
-        <input type="text" id="equipamento" placeholder="Equipamento" required>
-        <input type="text" id="modelo" placeholder="Marca / Modelo">
-        <input type="text" id="serie" placeholder="Número de Série">
-        <select id="status" required>
-          <option value="">Status da OS</option>
-          <option value="Em andamento">Em andamento</option>
-          <option value="Finalizada">Finalizada</option>
-          <option value="Entregue">Entregue</option>
-        </select>
-      </div>
-      <textarea id="defeito" placeholder="Defeito informado"></textarea>
-      <button type="submit">📄 Registrar e Gerar OS</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Ordens de Serviço</h2>
-    <table id="tabela">
-      <thead>
-        <tr>
-          <th>OS</th>
-          <th>Data</th>
-          <th>Cliente</th>
-          <th>Equipamento</th>
-          <th>Técnico</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getFirestore, collection, setDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAnZR2c7R7ANwHITxawvMgjLD08OrNfHxE",
   authDomain: "manutencaoromtech-ac05f.firebaseapp.com",
-  projectId: "manutencaoromtech-ac05f",
-  storageBucket: "manutencaoromtech-ac05f.firebasestorage.app",
-  messagingSenderId: "1051659351819",
-  appId: "1:1051659351819:web:3fa4d74126691e381d540e",
-  measurementId: "G-N19R0B56GF"
+  projectId: "manutencaoromtech-ac05f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const ordensCollection = collection(db,"ordens");
-let contadorOS = 0;
 
-// --- Login ---
-const loginDiv = document.getElementById("loginDiv");
-const mainDiv = document.getElementById("mainDiv");
-const msg = document.getElementById("msg");
+// Correção de ccontaddor que estava usando sempre o mesmo ID
+let contadorOS = Number(localStorage.getItem("contadorOS")) || 0;
+function gerarNumeroOS(){
+  contadorOS++;
+  localStorage.setItem("contadorOS", contadorOS);
+  return new Date().getFullYear()+"-"+String(contadorOS).padStart(4,"0");
+}
 
-onAuthStateChanged(auth,user=>{
-  if(user){
-    loginDiv.style.display="none";
-    mainDiv.style.display="block";
-    renderTabela();
-  } else {
-    loginDiv.style.display="flex";
-    mainDiv.style.display="none";
-  }
+function logout(){
+  signOut(auth).then(()=>{
+    location.reload();
+  });
+}
+
+// Vai salvar automaticamente
+document.getElementById("formEquipamento")?.addEventListener("submit",async function(e){
+  e.preventDefault();
+
+  const dados={
+    os: gerarNumeroOS(),
+    data: new Date().toLocaleString(),
+    cliente: document.getElementById("cliente").value,
+    equipamento: document.getElementById("equipamento").value,
+    tecnico: document.getElementById("tecnico").value,
+    status: document.getElementById("status").value
+  };
+
+  await addDoc(ordensCollection,dados);
+  this.reset();
+  renderTabela();
 });
 
-document.getElementById("btnLogin").addEventListener("click",()=>{
-  const email=document.getElementById("email").value;
-  const senha=document.getElementById("senha").value;
-  signInWithEmailAndPassword(auth,email,senha)
-  .then(()=>{loginDiv.style.display="none"; mainDiv.style.display="block"; renderTabela();})
-  .catch(error=>msg.textContent="Erro: "+error.message);
-});
-
-// --- OS Functions ---
-function gerarNumeroOS(){ contadorOS++; return new Date().getFullYear()+"-"+String(contadorOS).padStart(4,"0"); }
-
+// TABELA
 async function renderTabela(){
   const tbody=document.querySelector("#tabela tbody");
+  if(!tbody) return;
   tbody.innerHTML="";
+
   const querySnapshot = await getDocs(ordensCollection);
+
   querySnapshot.forEach(docSnap=>{
     const d=docSnap.data();
     const id=docSnap.id;
+
     const linha=tbody.insertRow();
     linha.insertCell().textContent=d.os;
-    linha.insertCell().textContent=d.data;
     linha.insertCell().textContent=d.cliente;
     linha.insertCell().textContent=d.equipamento;
     linha.insertCell().textContent=d.tecnico;
-    let classeStatus="";
-    if(d.status==="Em andamento") classeStatus="em-andamento";
-    if(d.status==="Finalizada") classeStatus="finalizada";
-    if(d.status==="Entregue") classeStatus="entregue";
-    linha.insertCell().innerHTML=`<span class="status ${classeStatus}">${d.status}</span>`;
+    linha.insertCell().textContent=d.status;
+
     const acao=linha.insertCell();
-    acao.classList.add("actions");
     acao.innerHTML=`
-      <button class="btn-green" onclick='gerarComprovante("${id}")'>🖨</button>
-      <button class="btn-gray" onclick='alterarStatus("${id}")'>🔄</button>
-      <button class="btn-red" onclick='excluirOS("${id}")'>🗑</button>
+      <button onclick='editarOS("${id}")'>✏️</button>
+      <button onclick='gerarComprovante("${id}")'>🖨</button>
+      <button onclick='excluirOS("${id}")'>🗑</button>
     `;
   });
 }
 
-document.getElementById("formEquipamento").addEventListener("submit",async function(e){
-  e.preventDefault();
-  const dados={
-    os: gerarNumeroOS(),
-    data: new Date().toLocaleString(),
-    loja: document.getElementById("loja").value,
-    setor: document.getElementById("setor").value,
-    ticket: document.getElementById("ticket").value,
-    tecnico: document.getElementById("tecnico").value,
-    cliente: document.getElementById("cliente").value,
-    equipamento: document.getElementById("equipamento").value,
-    modelo: document.getElementById("modelo").value,
-    serie: document.getElementById("serie").value,
-    defeito: document.getElementById("defeito").value,
-    status: document.getElementById("status").value
-  };
-  await setDoc(doc(db,"ordens",dados.os),dados);
-  this.reset();
-  renderTabela();
-  alert("OS registrada com sucesso!");
-});
+// Fun Editar
+async function editarOS(id){
+  const docRef = doc(db,"ordens",id);
+  const docSnap = await getDoc(docRef);
 
-// Alterar status
-async function alterarStatus(id){
-  const novoStatus=prompt("Digite o número do novo status:\n1 - Em andamento\n2 - Finalizada\n3 - Entregue");
-  let statusText="";
-  if(novoStatus==="1") statusText="Em andamento";
-  if(novoStatus==="2") statusText="Finalizada";
-  if(novoStatus==="3") statusText="Entregue";
-  if(!statusText) return;
-  await updateDoc(doc(db,"ordens",id),{status:statusText});
+  if(!docSnap.exists()) return;
+
+  const d = docSnap.data();
+
+  const novoCliente = prompt("Cliente:", d.cliente);
+  const novoEquip = prompt("Equipamento:", d.equipamento);
+  const novoTec = prompt("Técnico:", d.tecnico);
+
+  await updateDoc(docRef,{
+    cliente: novoCliente,
+    equipamento: novoEquip,
+    tecnico: novoTec
+  });
+
   renderTabela();
 }
 
-// Excluir OS
+// EXCLUIR
 async function excluirOS(id){
-  if(confirm("Deseja realmente excluir esta OS?")){
+  if(confirm("Excluir?")){
     await deleteDoc(doc(db,"ordens",id));
     renderTabela();
   }
 }
 
-// Gerar comprovante
+// Comprovante impressao modelo Bematech
 async function gerarComprovante(id){
   const docRef = doc(db,"ordens",id);
-  const docSnap = await getDocs(ordensCollection);
-  let dados = null;
-  docSnap.forEach(d => {if(d.id===id) dados=d.data();});
-  if(!dados) return alert("OS não encontrada");
-  const janela = window.open("","_blank","width=500,height=700");
-  janela.document.write(`
-    <style>
-      body{font-family:Arial;padding:20px;margin:0;}
-      h2{text-align:center;}
-      hr{margin:10px 0;}
-      p{font-size:14px;margin:5px 0;}
-      .status{font-weight:bold;}
-      @media print{ button{display:none;} }
-    </style>
-    <h2>ORDEM DE SERVIÇO</h2>
+  const docSnap = await getDoc(docRef);
+
+  if(!docSnap.exists()) return;
+
+  const d = docSnap.data();
+
+  const w = window.open("","_blank","width=400,height=600");
+  w.document.write(`
+    <h2>OS ${d.os}</h2>
+    <p>Cliente: ${d.cliente}</p>
+    <p>Equipamento: ${d.equipamento}</p>
+    <p>Técnico: ${d.tecnico}</p>
+    <p>Status: ${d.status}</p>
     <hr>
-    <p><b>Nº:</b> ${dados.os}</p>
-    <p><b>Data:</b> ${dados.data}</p>
-    <p><b>Status:</b> ${dados.status}</p>
-    <hr>
-    <p><b>Cliente:</b> ${dados.cliente}</p>
-    <p><b>Equipamento:</b> ${dados.equipamento}</p>
-    <p><b>Modelo:</b> ${dados.modelo}</p>
-    <p><b>Série:</b> ${dados.serie}</p>
-    <p><b>Defeito:</b> ${dados.defeito}</p>
-    <hr>
-    <p><b>Loja:</b> ${dados.loja}</p>
-    <p><b>Setor:</b> ${dados.setor}</p>
-    <p><b>Ticket Milvus:</b> ${dados.ticket}</p>
-    <p><b>Técnico:</b> ${dados.tecnico}</p>
-    <br><br><br>_____________________________<br>Assinatura do Cliente
+    Assinatura: __________________
   `);
-  janela.print();
+  w.print();
 }
 
-// --- Tornar funções globais para onclick inline ---
-window.gerarComprovante = gerarComprovante;
-window.alterarStatus = alterarStatus;
-window.excluirOS = excluirOS;
 window.logout = logout;
+window.editarOS = editarOS;
+window.excluirOS = excluirOS;
+window.gerarComprovante = gerarComprovante;
 
 </script>
-  
-<footer style="text-align: center; padding: 10px 0; position: fixed; bottom: 0; width: 100%; background-color: #fff;">
-  Desenvolvido por <strong style="color:#0f172a">RomTech</strong> • Uso exclusivo
-</footer>
+
 </body>
 </html>
