@@ -4,8 +4,75 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Manutenção</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
+body{background:linear-gradient(135deg,#0f172a,#1e293b);padding:20px;}
+.header{background:#0f172a;color:#fff;padding:20px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+.card{background:#fff;padding:20px;border-radius:15px;margin-bottom:20px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+input,select{padding:10px;border-radius:8px;border:1px solid #ccc;}
+button{background:#2563eb;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;}
+table{width:100%;margin-top:20px;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+.login-container{display:flex;justify-content:center;align-items:center;height:100vh;}
+.login-card{background:#fff;padding:30px;border-radius:10px;width:300px;}
+footer{position:fixed;bottom:0;width:100%;text-align:center;background:#fff;padding:5px;}
+</style>
+
 </head>
 <body>
+
+<div id="loginDiv" class="login-container">
+  <div class="login-card">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email">
+    <input id="senha" type="password" placeholder="Senha">
+    <button id="btnLogin">Entrar</button>
+  </div>
+</div>
+
+<div id="mainDiv" style="display:none;">
+  <div class="header">
+    <h1>Sistema de OS</h1>
+    <button onclick="logout()">Sair</button>
+  </div>
+
+  <div class="card">
+    <form id="formEquipamento">
+      <div class="form-grid">
+        <input id="cliente" placeholder="Cliente" required>
+        <input id="equipamento" placeholder="Equipamento" required>
+        <input id="tecnico" placeholder="Técnico" required>
+        <select id="status">
+          <option>Em andamento</option>
+          <option>Finalizada</option>
+          <option>Entregue</option>
+        </select>
+      </div>
+      <button type="submit">Salvar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>OS</th>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Equipamento</th>
+          <th>Técnico</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Desenvolvido por ROMTECH</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
@@ -21,125 +88,93 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const ordensCollection = collection(db,"ordens");
+const col = collection(db,"ordens");
 
-// Correção de ccontaddor que estava usando sempre o mesmo ID
-let contadorOS = Number(localStorage.getItem("contadorOS")) || 0;
-function gerarNumeroOS(){
-  contadorOS++;
-  localStorage.setItem("contadorOS", contadorOS);
-  return new Date().getFullYear()+"-"+String(contadorOS).padStart(4,"0");
-}
+let contador = Number(localStorage.getItem("os"))||0;
+function gerarOS(){contador++;localStorage.setItem("os",contador);return new Date().getFullYear()+"-"+String(contador).padStart(4,"0");}
 
-function logout(){
-  signOut(auth).then(()=>{
-    location.reload();
-  });
-}
-
-// Vai salvar automaticamente
-document.getElementById("formEquipamento")?.addEventListener("submit",async function(e){
-  e.preventDefault();
-
-  const dados={
-    os: gerarNumeroOS(),
-    data: new Date().toLocaleString(),
-    cliente: document.getElementById("cliente").value,
-    equipamento: document.getElementById("equipamento").value,
-    tecnico: document.getElementById("tecnico").value,
-    status: document.getElementById("status").value
-  };
-
-  await addDoc(ordensCollection,dados);
-  this.reset();
-  renderTabela();
+onAuthStateChanged(auth,user=>{
+  loginDiv.style.display = user?"none":"flex";
+  mainDiv.style.display = user?"block":"none";
+  if(user) carregar();
 });
 
-// TABELA
-async function renderTabela(){
-  const tbody=document.querySelector("#tabela tbody");
-  if(!tbody) return;
-  tbody.innerHTML="";
+btnLogin.onclick=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
 
-  const querySnapshot = await getDocs(ordensCollection);
+function logout(){signOut(auth);}
 
-  querySnapshot.forEach(docSnap=>{
-    const d=docSnap.data();
-    const id=docSnap.id;
+formEquipamento.onsubmit=async e=>{
+  e.preventDefault();
 
-    const linha=tbody.insertRow();
-    linha.insertCell().textContent=d.os;
-    linha.insertCell().textContent=d.cliente;
-    linha.insertCell().textContent=d.equipamento;
-    linha.insertCell().textContent=d.tecnico;
-    linha.insertCell().textContent=d.status;
+  await addDoc(col,{
+    os:gerarOS(),
+    data:new Date().toLocaleString(),
+    cliente:cliente.value,
+    equipamento:equipamento.value,
+    tecnico:tecnico.value,
+    status:status.value
+  });
 
-    const acao=linha.insertCell();
-    acao.innerHTML=`
-      <button onclick='editarOS("${id}")'>✏️</button>
-      <button onclick='gerarComprovante("${id}")'>🖨</button>
-      <button onclick='excluirOS("${id}")'>🗑</button>
+  formEquipamento.reset();
+  carregar();
+};
+
+async function carregar(){
+  tabela.querySelector("tbody").innerHTML="";
+  const snap = await getDocs(col);
+
+  snap.forEach(d=>{
+    const data=d.data();
+    const id=d.id;
+
+    const tr=tabela.insertRow();
+    tr.insertCell().textContent=data.os;
+    tr.insertCell().textContent=data.data;
+    tr.insertCell().textContent=data.cliente;
+    tr.insertCell().textContent=data.equipamento;
+    tr.insertCell().textContent=data.tecnico;
+    tr.insertCell().textContent=data.status;
+
+    tr.insertCell().innerHTML=`
+      <button onclick="editar('${id}')">✏️</button>
+      <button onclick="printOS('${id}')">🖨</button>
+      <button onclick="del('${id}')">🗑</button>
     `;
   });
 }
 
-// Fun Editar
-async function editarOS(id){
-  const docRef = doc(db,"ordens",id);
-  const docSnap = await getDoc(docRef);
+async function editar(id){
+  const ref=doc(db,"ordens",id);
+  const snap=await getDoc(ref);
+  const d=snap.data();
 
-  if(!docSnap.exists()) return;
+  const nome=prompt("Cliente",d.cliente);
+  if(!nome)return;
 
-  const d = docSnap.data();
-
-  const novoCliente = prompt("Cliente:", d.cliente);
-  const novoEquip = prompt("Equipamento:", d.equipamento);
-  const novoTec = prompt("Técnico:", d.tecnico);
-
-  await updateDoc(docRef,{
-    cliente: novoCliente,
-    equipamento: novoEquip,
-    tecnico: novoTec
-  });
-
-  renderTabela();
+  await updateDoc(ref,{cliente:nome});
+  carregar();
 }
 
-// EXCLUIR
-async function excluirOS(id){
+async function del(id){
   if(confirm("Excluir?")){
     await deleteDoc(doc(db,"ordens",id));
-    renderTabela();
+    carregar();
   }
 }
 
-// Comprovante impressao modelo Bematech
-async function gerarComprovante(id){
-  const docRef = doc(db,"ordens",id);
-  const docSnap = await getDoc(docRef);
+async function printOS(id){
+  const snap=await getDoc(doc(db,"ordens",id));
+  const d=snap.data();
 
-  if(!docSnap.exists()) return;
-
-  const d = docSnap.data();
-
-  const w = window.open("","_blank","width=400,height=600");
-  w.document.write(`
-    <h2>OS ${d.os}</h2>
-    <p>Cliente: ${d.cliente}</p>
-    <p>Equipamento: ${d.equipamento}</p>
-    <p>Técnico: ${d.tecnico}</p>
-    <p>Status: ${d.status}</p>
-    <hr>
-    Assinatura: __________________
-  `);
+  const w=window.open("","","width=300,height=600");
+  w.document.write(`<h3>OS ${d.os}</h3><p>${d.cliente}</p><p>${d.equipamento}</p><p>${d.status}</p>`);
   w.print();
 }
 
-window.logout = logout;
-window.editarOS = editarOS;
-window.excluirOS = excluirOS;
-window.gerarComprovante = gerarComprovante;
-
+window.logout=logout;
+window.editar=editar;
+window.del=del;
+window.printOS=printOS;
 </script>
 
 </body>
