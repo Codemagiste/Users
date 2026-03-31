@@ -3,179 +3,206 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Manutenção</title>
+<title>Sistema OS</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Arial;}
-body{background:linear-gradient(135deg,#0f172a,#1e293b);padding:20px;}
-.header{background:#0f172a;color:#fff;padding:20px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
-.card{background:#fff;padding:20px;border-radius:15px;margin-bottom:20px;}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
-input,select{padding:10px;border-radius:8px;border:1px solid #ccc;}
-button{background:#2563eb;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;}
-table{width:100%;margin-top:20px;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-.login-container{display:flex;justify-content:center;align-items:center;height:100vh;}
-.login-card{background:#fff;padding:30px;border-radius:10px;width:300px;}
-footer{position:fixed;bottom:0;width:100%;text-align:center;background:#fff;padding:5px;}
+body{background:#0f172a;padding:20px;color:#111;}
+.header{background:#020617;color:#fff;padding:15px;border-radius:10px;display:flex;justify-content:space-between;}
+.card{background:#fff;padding:15px;border-radius:10px;margin-top:15px;}
+input,select{width:100%;padding:8px;margin:5px 0;border:1px solid #ccc;border-radius:6px;}
+button{padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;}
+table{width:100%;margin-top:10px;border-collapse:collapse;}
+th,td{padding:8px;border-bottom:1px solid #ddd;}
+.toast{position:fixed;top:10px;right:10px;background:#111;color:#fff;padding:10px;border-radius:6px;opacity:0}
+.toast.show{opacity:1}
+.login-box{max-width:320px;margin:auto;margin-top:10%;background:#fff;padding:20px;border-radius:10px;text-align:center}
+.login-box img{width:100%;border-radius:8px;margin-bottom:10px}
 </style>
-
 </head>
 <body>
 
-<div id="loginDiv" class="login-container">
-  <div class="login-card">
-    <h2>Login</h2>
-    <input id="email" placeholder="Email">
-    <input id="senha" type="password" placeholder="Senha">
-    <button id="btnLogin">Entrar</button>
-  </div>
+<div id="toast" class="toast"></div>
+
+<div id="loginDiv" class="login-box">
+  <img src="https://i.imgur.com/u7X1g64.jpeg">
+  <h2>Sistema OS</h2>
+  <input id="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
 </div>
 
 <div id="mainDiv" style="display:none;">
   <div class="header">
-    <h1>Sistema de OS</h1>
+    <span id="userInfo"></span>
     <button onclick="logout()">Sair</button>
   </div>
 
-  <div class="card">
-    <form id="formEquipamento">
-      <div class="form-grid">
-        <input id="cliente" placeholder="Cliente" required>
-        <input id="equipamento" placeholder="Equipamento" required>
-        <input id="tecnico" placeholder="Técnico" required>
-        <select id="status">
-          <option>Em andamento</option>
-          <option>Finalizada</option>
-          <option>Entregue</option>
-        </select>
-      </div>
-      <button type="submit">Salvar</button>
-    </form>
+  <div class="card" id="userPanel" style="display:none;">
+    <h3>Gerenciar Usuários</h3>
+    <input id="novoEmail" placeholder="Email">
+    <select id="novoPerfil">
+      <option value="admin">Admin</option>
+      <option value="tecnico">Técnico</option>
+    </select>
+    <button onclick="criarUsuario()">Criar</button>
+    <table id="tabelaUsuarios"><tbody></tbody></table>
   </div>
 
   <div class="card">
-    <table id="tabela">
-      <thead>
-        <tr>
-          <th>OS</th>
-          <th>Data</th>
-          <th>Cliente</th>
-          <th>Equipamento</th>
-          <th>Técnico</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <input id="cliente" placeholder="Cliente">
+    <input id="equipamento" placeholder="Equipamento">
+    <input id="tecnico" placeholder="Técnico">
+    <input id="serie" placeholder="Série">
+    <select id="status">
+      <option>Em andamento</option>
+      <option>Finalizada</option>
+      <option>Entregue</option>
+    </select>
+    <button onclick="salvar()">Salvar OS</button>
+  </div>
+
+  <div class="card">
+    <input id="busca" placeholder="Buscar...">
+    <table id="tabela"><tbody></tbody></table>
   </div>
 </div>
-
-<footer>Desenvolvido por ROMTECH</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAnZR2c7R7ANwHITxawvMgjLD08OrNfHxE",
-  authDomain: "manutencaoromtech-ac05f.firebaseapp.com",
-  projectId: "manutencaoromtech-ac05f"
+const firebaseConfig={
+ apiKey:"AIzaSyAnZR2c7R7ANwHITxawvMgjLD08OrNfHxE",
+ authDomain:"manutencaoromtech-ac05f.firebaseapp.com",
+ projectId:"manutencaoromtech-ac05f"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const col = collection(db,"ordens");
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const auth=getAuth(app);
 
-let contador = Number(localStorage.getItem("os"))||0;
-function gerarOS(){contador++;localStorage.setItem("os",contador);return new Date().getFullYear()+"-"+String(contador).padStart(4,"0");}
+const ordens=collection(db,"ordens");
+const usuarios=collection(db,"usuarios");
 
-onAuthStateChanged(auth,user=>{
-  loginDiv.style.display = user?"none":"flex";
-  mainDiv.style.display = user?"block":"none";
-  if(user) carregar();
+let usuarioAtual=null;
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+onAuthStateChanged(auth, async user=>{
+  if(user){
+    loginDiv.style.display='none';
+    mainDiv.style.display='block';
+
+    const snap=await getDocs(usuarios);
+    snap.forEach(d=>{if(d.data().email===user.email) usuarioAtual=d.data();});
+
+    userInfo.textContent=user.email+" ("+usuarioAtual.perfil+")";
+
+    if(usuarioAtual.perfil==='admin'){
+      userPanel.style.display='block';
+      carregarUsuarios();
+    }
+
+    carregar();
+  }
 });
 
-btnLogin.onclick=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
+window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value).catch(e=>toast(e.message));
+window.logout=()=>signOut(auth);
 
-function logout(){signOut(auth);}
+window.criarUsuario=async()=>{
+  await addDoc(usuarios,{email:novoEmail.value,perfil:novoPerfil.value});
+  toast('Usuário criado');
+  carregarUsuarios();
+}
 
-formEquipamento.onsubmit=async e=>{
-  e.preventDefault();
+async function carregarUsuarios(){
+  tabelaUsuarios.innerHTML='';
+  const snap=await getDocs(usuarios);
+  snap.forEach(d=>{
+    const u=d.data();
+    tabelaUsuarios.innerHTML+=`<tr><td>${u.email}</td><td>${u.perfil}</td></tr>`;
+  });
+}
 
-  await addDoc(col,{
-    os:gerarOS(),
-    data:new Date().toLocaleString(),
+window.salvar=async()=>{
+  if(!cliente.value||!equipamento.value||!serie.value){toast('Preencha tudo');return}
+
+  const snap=await getDocs(ordens);
+  for(const d of snap.docs){if(d.data().serie===serie.value){toast('Duplicado');return}}
+
+  await addDoc(ordens,{
     cliente:cliente.value,
     equipamento:equipamento.value,
     tecnico:tecnico.value,
-    status:status.value
+    serie:serie.value,
+    status:status.value,
+    data:new Date().toLocaleString()
   });
 
-  formEquipamento.reset();
+  toast('Salvo');
   carregar();
-};
+}
 
+let cache=[];
 async function carregar(){
-  tabela.querySelector("tbody").innerHTML="";
-  const snap = await getDocs(col);
+  cache=[];
+  const snap=await getDocs(ordens);
+  snap.forEach(d=>{const x=d.data();x.id=d.id;cache.push(x)});
+  render(cache);
+}
 
-  snap.forEach(d=>{
-    const data=d.data();
-    const id=d.id;
-
-    const tr=tabela.insertRow();
-    tr.insertCell().textContent=data.os;
-    tr.insertCell().textContent=data.data;
-    tr.insertCell().textContent=data.cliente;
-    tr.insertCell().textContent=data.equipamento;
-    tr.insertCell().textContent=data.tecnico;
-    tr.insertCell().textContent=data.status;
-
-    tr.insertCell().innerHTML=`
-      <button onclick="editar('${id}')">✏️</button>
-      <button onclick="printOS('${id}')">🖨</button>
-      <button onclick="del('${id}')">🗑</button>
-    `;
+function render(lista){
+  tabela.innerHTML='';
+  lista.forEach(d=>{
+    tabela.innerHTML+=`<tr>
+    <td>${d.cliente}</td>
+    <td>${d.equipamento}</td>
+    <td>${d.status}</td>
+    <td>
+    <button title="Editar" onclick="editar('${d.id}')">✏️</button>
+    ${usuarioAtual.perfil==='admin'?`<button title="Excluir" onclick="del('${d.id}')">🗑</button>`:''}
+    <button title="Imprimir" onclick="printOS('${d.id}')">🖨</button>
+    </td></tr>`;
   });
 }
 
-async function editar(id){
-  const ref=doc(db,"ordens",id);
-  const snap=await getDoc(ref);
-  const d=snap.data();
+busca.oninput=()=>{
+  const t=busca.value.toLowerCase();
+  render(cache.filter(d=>d.cliente.toLowerCase().includes(t)||d.equipamento.toLowerCase().includes(t)));
+}
 
-  const nome=prompt("Cliente",d.cliente);
-  if(!nome)return;
+window.editar=async id=>{
+  const s=prompt('1 andamento 2 finalizada 3 entregue');
+  let st='';
+  if(s==='1')st='Em andamento';
+  if(s==='2')st='Finalizada';
+  if(s==='3')st='Entregue';
+  if(!st)return;
 
-  await updateDoc(ref,{cliente:nome});
+  await updateDoc(doc(db,'ordens',id),{status:st});
+  toast('Atualizado');
   carregar();
 }
 
-async function del(id){
-  if(confirm("Excluir?")){
-    await deleteDoc(doc(db,"ordens",id));
-    carregar();
-  }
+window.del=async id=>{
+  if(usuarioAtual.perfil!=='admin'){toast('Sem permissão');return}
+  await deleteDoc(doc(db,'ordens',id));
+  toast('Excluído');
+  carregar();
 }
 
-async function printOS(id){
-  const snap=await getDoc(doc(db,"ordens",id));
+window.printOS=async id=>{
+  const snap=await getDoc(doc(db,'ordens',id));
   const d=snap.data();
 
-  const w=window.open("","","width=300,height=600");
-  w.document.write(`<h3>OS ${d.os}</h3><p>${d.cliente}</p><p>${d.equipamento}</p><p>${d.status}</p>`);
+  const w=window.open('','','width=300,height=600');
+  w.document.write(`<div style="font-family:monospace;font-size:12px">OS<br>${d.cliente}<br>${d.equipamento}<br>${d.status}<br>________</div>`);
   w.print();
 }
 
-window.logout=logout;
-window.editar=editar;
-window.del=del;
-window.printOS=printOS;
 </script>
-
 </body>
 </html>
