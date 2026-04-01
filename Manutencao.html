@@ -89,12 +89,13 @@ onAuthStateChanged(auth, async user=>{
   if(user){
     loginDiv.style.display="none";
     mainDiv.style.display="block";
-
+    console.log("Logado:", user.email);
+    console.log("Usuário Firestore:", usuarioAtual);
     usuarioAtual=null;
 
     const snap=await getDocs(usuarios);
     snap.forEach(d=>{
-      if(d.data().email===user.email){
+      if(d.data().email.toLowerCase().trim() === user.email.toLowerCase().trim()){
         usuarioAtual=d.data();
       }
     });
