@@ -86,6 +86,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const ordens = collection(db,"ordens");
+const logs = collection(db,"logs");
 const usuarios = collection(db,"usuarios");
 
 let usuarioAtual = null;
@@ -118,7 +119,7 @@ onAuthStateChanged(auth, async user=>{
   const q = query(usuarios, where("email","==", user.email));
   const snap = await getDocs(q);
 
-  usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico"};
+  usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico",loja:"geral"};
 
   userInfo.textContent = user.email + " ("+usuarioAtual.perfil+")";
   carregar();
@@ -128,7 +129,17 @@ onAuthStateChanged(auth, async user=>{
  }
 });
 
-window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value).catch(e=>toast(e.message));
+// 🔔 LOG DE LOGIN
+async function logAcao(tipo,descricao){
+ await addDoc(logs,{
+  tipo,
+  descricao,
+  user: auth.currentUser?.email || 'sistema',
+  data: new Date().toLocaleString()
+ });
+}
+
+window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value).then(()=>logAcao('login','Usuário logou')).catch(e=>toast(e.message));
 window.logout = ()=> signOut(auth);
 
 window.salvar = async ()=>{
@@ -139,6 +150,7 @@ window.salvar = async ()=>{
  const numeroOS = await gerarOS();
 
  await addDoc(ordens,{
+  loja: usuarioAtual.loja || 'geral',
   os: numeroOS,
   cliente:cliente.value,
   equipamento:equipamento.value,
@@ -150,6 +162,7 @@ window.salvar = async ()=>{
  });
 
  toast("OS criada: "+numeroOS);
+ await logAcao('criacao','Criou '+numeroOS);
  carregar();
 }
 
@@ -181,8 +194,9 @@ function render(lista){
    <td>${d.equipamento}</td>
    <td><span class="badge ${cor(d.status)}" onclick="trocar('${d.id}','${d.status}')">${d.status}</span></td>
    <td>
-    <button onclick="hist('${d.id}')">📜</button>
-    ${usuarioAtual.perfil==="admin"?`<button onclick="del('${d.id}')">🗑</button>`:""}
+    <button title="Ver histórico" onclick="hist('${d.id}')">📜</button>
+        <button title="Imprimir OS" onclick="imprimir('${d.id}')">🧾</button>
+    ${usuarioAtual.perfil==="admin"?`<button title="Excluir OS" onclick="del('${d.id}')">🗑</button>`:""}
    </td>
   </tr>`;
  });
@@ -201,6 +215,30 @@ window.trocar = async (id,atual)=>{
  carregar();
 }
 
+// 🧾 IMPRESSÃO TÉRMICA
+window.imprimir = async id=>{
+ const snap = await getDoc(doc(db,'ordens',id));
+ const d = snap.data();
+
+ const w = window.open('', '', 'width=300,height=600');
+ w.document.write(`
+  <style>
+    body{font-family:monospace;font-size:12px}
+    hr{border-top:1px dashed #000}
+  </style>
+  <h3>ORDEM DE SERVIÇO</h3>
+  <hr>
+  OS: ${d.os}<br>
+  Cliente: ${d.cliente}<br>
+  Equip: ${d.equipamento}<br>
+  Status: ${d.status}<br>
+  Técnico: ${d.tecnico}<br>
+  <hr>
+  ${d.data}
+ `);
+ w.print();
+}
+
 window.hist = async id=>{
  const snap = await getDoc(doc(db,"ordens",id));
  const h = snap.data().historico || [];
@@ -212,9 +250,97 @@ window.hist = async id=>{
 window.del = async id=>{
  if(usuarioAtual.perfil!=="admin") return toast("Sem permissão");
  await deleteDoc(doc(db,"ordens",id));
+ await logAcao('exclusao','Excluiu OS '+id);
  carregar();
 }
 
 </script>
+
+<!-- 🔥 PAINEL ADMIN -->
+<div id="adminPanel" class="card" style="display:none;">
+<h3>Painel Administrativo</h3>
+
+<h4>Criar Usuário</h4>
+<input id="novoEmail" placeholder="Email">
+<input id="novaSenha" type="password" placeholder="Senha">
+<select id="novoPerfil">
+<option value="tecnico">Técnico</option>
+<option value="admin">Admin</option>
+</select>
+<button onclick="criarUsuario()">Criar Usuário</button>
+
+<h4>Relatório de Alterações</h4>
+<button onclick="relatorio()">Gerar Relatório</button>
+<pre id="logRelatorio" style="background:#111;color:#0f0;padding:10px;margin-top:10px;max-height:200px;overflow:auto"></pre>
+</div>
+
+<script type="module">
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+// Mostrar painel admin
+function mostrarAdmin(){
+ if(usuarioAtual && usuarioAtual.perfil === 'admin'){
+  document.getElementById('adminPanel').style.display='block';
+ }
+}
+
+// Atualiza após login
+const oldAuth = onAuthStateChanged;
+onAuthStateChanged(auth, async user=>{
+ if(user){
+  setTimeout(mostrarAdmin,500);
+ }
+});
+
+// Criar usuário
+window.criarUsuario = async ()=>{
+ try{
+  const email = document.getElementById('novoEmail').value;
+  const senha = document.getElementById('novaSenha').value;
+  const perfil = document.getElementById('novoPerfil').value;
+
+  if(!email || !senha) return toast('Preencha tudo');
+
+  const cred = await createUserWithEmailAndPassword(auth,email,senha);
+
+  await addDoc(usuarios,{
+    email: email,
+    perfil: perfil
+  });
+
+  toast('Usuário criado');
+  await signOut(auth);
+
+ }catch(e){toast(e.message)}
+}
+
+// Relatório completo
+window.relatorio = async ()=>{
+ const snap = await getDocs(ordens);
+ let txt = "RELATÓRIO COMPLETO
+
+";
+
+ snap.forEach(doc=>{
+  const d = doc.data();
+  txt += `OS: ${d.os}
+Cliente: ${d.cliente}
+Status: ${d.status}
+`;
+
+  (d.historico||[]).forEach(h=>{
+    txt += `  - ${h.data} | ${h.de} → ${h.para} | ${h.user}
+`;
+  });
+
+  txt += "---------------------
+";
+ });
+
+ document.getElementById('logRelatorio').textContent = txt;
+}
+</script>
+
 </body>
+</html>
 </html>
