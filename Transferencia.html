@@ -18,104 +18,28 @@
 }
 
 *{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Arial;background:linear-gradient(135deg,#e2e8f0,#f8fafc);color:var(--texto)}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',Arial;
-  background:linear-gradient(135deg,#e2e8f0,#f8fafc);
-  color:var(--texto);
-}
+#login{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#0f172a,#1e293b)}
+#loginBox{background:#fff;padding:40px;border-radius:16px;box-shadow:var(--sombra);text-align:center;width:320px}
 
-/* LOGIN */
-#login{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  height:100vh;
-  background:linear-gradient(135deg,#0f172a,#1e293b);
-}
-
-#loginBox{
-  background:#fff;
-  padding:40px;
-  border-radius:16px;
-  box-shadow:var(--sombra);
-  text-align:center;
-  width:320px;
-  animation:fadeIn .6s ease;
-}
-
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-input,select{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  border-radius:8px;
-  border:1px solid #cbd5e1;
-}
-
-button{
-  background:linear-gradient(145deg,var(--azul),var(--azul-escuro));
-  color:#fff;
-  border:none;
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
-  transition:.2s;
-  font-weight:600;
-}
-
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #cbd5e1}
+button{background:linear-gradient(145deg,var(--azul),var(--azul-escuro));color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer}
 button:hover{transform:scale(1.03)}
 
-header{
-  background:linear-gradient(90deg,#0f172a,#1e293b);
-  color:#fff;
-  padding:16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
+header{background:#0f172a;color:#fff;padding:16px;display:flex;justify-content:space-between}
 .container{padding:20px;max-width:1200px;margin:auto}
+.card{background:#fff;padding:20px;margin-bottom:20px;border-radius:14px;box-shadow:var(--sombra)}
 
-.card{
-  background:var(--card);
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:var(--sombra);
-  animation:fadeIn .4s ease;
-}
-
-h3{margin-top:0}
-
-/* TABELA */
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th{background:#e2e8f0;padding:10px}
-td{padding:10px;border-top:1px solid #e2e8f0}
-
-tr:hover{background:#f8fafc}
-
-.badge{
-  padding:4px 8px;
-  border-radius:6px;
-  font-size:12px;
-  color:#fff;
-}
-
+.badge{padding:4px 8px;border-radius:6px;color:#fff}
 .Ativo{background:#16a34a}
 .Estoque{background:#64748b}
 .Manutenção{background:#f59e0b}
 .Defeito{background:#dc2626}
 
-/* RESPONSIVO */
-@media(max-width:768px){
-  table{display:block;overflow-x:auto;white-space:nowrap}
-}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #ddd}
+tr:hover{background:#f8fafc}
 </style>
 </head>
 <body>
@@ -208,11 +132,13 @@ let grafico;
 let editandoId=null;
 
 window.login=async()=>{
-  const email=usuario.value;
-  const senha=senha.value;
+  const email=document.getElementById("usuario").value.trim();
+  const senhaInput=document.getElementById("senha").value.trim();
+
+  if(!email||!senhaInput){alert("Preencha tudo");return}
 
   try{
-    const cred=await signInWithEmailAndPassword(auth,email,senha);
+    await signInWithEmailAndPassword(auth,email,senhaInput);
     const snap=await getDocs(collection(db,"usuarios"));
     snap.forEach(d=>{if(d.data().email===email)tipoUsuario=d.data().tipo});
     iniciar();
@@ -220,9 +146,14 @@ window.login=async()=>{
 }
 
 function iniciar(){
-  login.style.display="none";
-  app.style.display="block";
-  if(tipoUsuario==="admin")usuariosBox.style.display="block";
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  if(tipoUsuario==="admin"){
+    document.getElementById("usuariosBox").style.display="block";
+    carregarUsuarios();
+  }
+
   carregarEquip();
   carregarLogs();
 }
@@ -230,7 +161,13 @@ function iniciar(){
 window.logout=()=>{signOut(auth);location.reload();}
 
 window.salvarEquipamento=async()=>{
-  const data={patrimonio:patrimonio.value,nome:nome.value,quantidade:quantidade.value,loja:loja.value,status:status.value};
+  const data={
+    patrimonio:document.getElementById("patrimonio").value,
+    nome:document.getElementById("nome").value,
+    quantidade:document.getElementById("quantidade").value,
+    loja:document.getElementById("loja").value,
+    status:document.getElementById("status").value
+  };
 
   if(editandoId){
     await updateDoc(doc(db,"equipamentos",editandoId),data);
@@ -241,7 +178,16 @@ window.salvarEquipamento=async()=>{
     log("Criou",data.patrimonio);
   }
 
+  limparCampos();
   carregarEquip();
+}
+
+function limparCampos(){
+  document.getElementById("patrimonio").value="";
+  document.getElementById("nome").value="";
+  document.getElementById("quantidade").value=1;
+  document.getElementById("loja").value="";
+  document.getElementById("status").value="Ativo";
 }
 
 async function carregarEquip(){
@@ -265,18 +211,18 @@ async function carregarEquip(){
     </tr>`;
   });
 
-  tabelaEquip.innerHTML=html;
+  document.getElementById("tabelaEquip").innerHTML=html;
   graficoDash();
 }
 
 window.editar=id=>{
   if(tipoUsuario==="loja")return alert("Sem permissão");
   const e=equipamentos.find(x=>x.id===id);
-  patrimonio.value=e.patrimonio;
-  nome.value=e.nome;
-  quantidade.value=e.quantidade;
-  loja.value=e.loja;
-  status.value=e.status;
+  document.getElementById("patrimonio").value=e.patrimonio;
+  document.getElementById("nome").value=e.nome;
+  document.getElementById("quantidade").value=e.quantidade;
+  document.getElementById("loja").value=e.loja;
+  document.getElementById("status").value=e.status;
   editandoId=id;
 }
 
@@ -288,26 +234,41 @@ window.excluir=async(id)=>{
 }
 
 window.criarUsuario=async()=>{
-  await addDoc(collection(db,"usuarios"),{email:novoEmail.value,nome:novoNome.value,tipo:novoTipo.value});
+  await addDoc(collection(db,"usuarios"),{
+    email:document.getElementById("novoEmail").value,
+    nome:document.getElementById("novoNome").value,
+    tipo:document.getElementById("novoTipo").value
+  });
   carregarUsuarios();
 }
 
 async function carregarUsuarios(){
   const snap=await getDocs(collection(db,"usuarios"));
   let html="";
-  snap.forEach(d=>{const u=d.data();html+=`<tr><td>${u.email}</td><td>${u.tipo}</td></tr>`});
-  tabelaUsuarios.innerHTML=html;
+  snap.forEach(d=>{
+    const u=d.data();
+    html+=`<tr><td>${u.email}</td><td>${u.tipo}</td></tr>`;
+  });
+  document.getElementById("tabelaUsuarios").innerHTML=html;
 }
 
 async function log(acao,det){
-  await addDoc(collection(db,"logs"),{acao,det,usuario:auth.currentUser.email,data:new Date().toLocaleString()});
+  await addDoc(collection(db,"logs"),{
+    acao,
+    det,
+    usuario:auth.currentUser.email,
+    data:new Date().toLocaleString()
+  });
 }
 
 async function carregarLogs(){
   const snap=await getDocs(collection(db,"logs"));
   let html="";
-  snap.forEach(d=>{const l=d.data();html+=`<tr><td>${l.acao}</td><td>${l.usuario}</td><td>${l.data}</td></tr>`});
-  tabelaLogs.innerHTML=html;
+  snap.forEach(d=>{
+    const l=d.data();
+    html+=`<tr><td>${l.acao}</td><td>${l.usuario}</td><td>${l.data}</td></tr>`;
+  });
+  document.getElementById("tabelaLogs").innerHTML=html;
 }
 
 function graficoDash(){
