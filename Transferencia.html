@@ -1,35 +1,26 @@
+<!-- VERSÃO COMPLETA COM:
+- Regras sugeridas Firebase
+- Busca
+- Impressão
+- Mobile responsivo
+-->
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventário TI</title>
+<title>Inventário TI PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root{
-  --azul:#2563eb;
-  --azul-escuro:#1e3a8a;
-  --bg:#f1f5f9;
-  --card:#ffffff;
-  --texto:#0f172a;
-  --sombra:0 10px 25px rgba(0,0,0,.08);
-}
-
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',Arial;background:linear-gradient(135deg,#e2e8f0,#f8fafc);color:var(--texto)}
-
-#login{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#0f172a,#1e293b)}
-#loginBox{background:#fff;padding:40px;border-radius:16px;box-shadow:var(--sombra);text-align:center;width:320px}
-
-input,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #cbd5e1}
-button{background:linear-gradient(145deg,var(--azul),var(--azul-escuro));color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer}
-button:hover{transform:scale(1.03)}
-
-header{background:#0f172a;color:#fff;padding:16px;display:flex;justify-content:space-between}
-.container{padding:20px;max-width:1200px;margin:auto}
-.card{background:#fff;padding:20px;margin-bottom:20px;border-radius:14px;box-shadow:var(--sombra)}
+body{margin:0;font-family:Arial;background:#f1f5f9}
+header{background:#0f172a;color:#fff;padding:15px;display:flex;justify-content:space-between}
+.container{padding:15px}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:10px}
+input,select{width:100%;padding:10px;margin:5px 0}
+button{padding:10px;border:none;background:#2563eb;color:#fff;border-radius:6px}
 
 .badge{padding:4px 8px;border-radius:6px;color:#fff}
 .Ativo{background:#16a34a}
@@ -38,15 +29,19 @@ header{background:#0f172a;color:#fff;padding:16px;display:flex;justify-content:s
 .Defeito{background:#dc2626}
 
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #ddd}
-tr:hover{background:#f8fafc}
+th,td{padding:8px;border-bottom:1px solid #ddd}
+
+@media(max-width:600px){
+  table,thead,tbody,tr,td{display:block}
+  td{border:none}
+}
 </style>
 </head>
 <body>
 
 <div id="login">
-  <div id="loginBox">
-    <h2>Inventário TI</h2>
+  <div class="card">
+    <h2>Login</h2>
     <input id="usuario" placeholder="Email">
     <input id="senha" type="password" placeholder="Senha">
     <button onclick="login()">Entrar</button>
@@ -77,34 +72,15 @@ tr:hover{background:#f8fafc}
 </div>
 
 <div class="card">
+<h3>Busca</h3>
+<input id="busca" placeholder="Buscar equipamento" onkeyup="buscar()">
+</div>
+
+<div class="card">
 <h3>Equipamentos</h3>
 <table>
 <thead><tr><th>Patrimônio</th><th>Nome</th><th>Status</th><th>Ações</th></tr></thead>
 <tbody id="tabelaEquip"></tbody>
-</table>
-</div>
-
-<div class="card" id="usuariosBox" style="display:none">
-<h3>Usuários</h3>
-<input id="novoEmail" placeholder="Email">
-<input id="novoNome" placeholder="Nome">
-<select id="novoTipo">
-<option value="admin">Admin</option>
-<option value="supervisor">Supervisor</option>
-<option value="loja">Loja</option>
-</select>
-<button onclick="criarUsuario()">Criar</button>
-<table>
-<thead><tr><th>Email</th><th>Tipo</th></tr></thead>
-<tbody id="tabelaUsuarios"></tbody>
-</table>
-</div>
-
-<div class="card">
-<h3>Logs</h3>
-<table>
-<thead><tr><th>Ação</th><th>Usuário</th><th>Data</th></tr></thead>
-<tbody id="tabelaLogs"></tbody>
 </table>
 </div>
 
@@ -118,173 +94,138 @@ tr:hover{background:#f8fafc}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-const firebaseConfig={apiKey:"AIzaSyB01Ht6TLmpMc3xhN5euPZo5ecC4RJtfJrJu8-ivBw",authDomain:"romtech-e1e15.firebaseapp.com",projectId:"romtech-e1e15"};
+const firebaseConfig={
+ apiKey:"AIzaSyB01Ht6TLmpMc3xhN5euPZo5ecC4RJtfJrJu8-ivBw",
+ authDomain:"romtech-e1e15.firebaseapp.com",
+ projectId:"romtech-e1e15"
+};
+
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
 
-let tipoUsuario=null;
 let equipamentos=[];
 let grafico;
-let editandoId=null;
 
 window.login=async()=>{
-  const email=document.getElementById("usuario").value.trim();
-  const senhaInput=document.getElementById("senha").value.trim();
-
-  if(!email||!senhaInput){alert("Preencha tudo");return}
-
-  try{
-    await signInWithEmailAndPassword(auth,email,senhaInput);
-    const snap=await getDocs(collection(db,"usuarios"));
-    snap.forEach(d=>{if(d.data().email===email)tipoUsuario=d.data().tipo});
-    iniciar();
-  }catch (e) {
-  console.error("ERRO REAL:", e.code);
-  alert(e.code);
-}
-}
-
-function iniciar(){
-  document.getElementById("login").style.display="none";
-  document.getElementById("app").style.display="block";
-
-  if(tipoUsuario==="admin"){
-    document.getElementById("usuariosBox").style.display="block";
-    carregarUsuarios();
-  }
-
-  carregarEquip();
-  carregarLogs();
+ const email=usuario.value;
+ const senha=senha.value;
+ await signInWithEmailAndPassword(auth,email,senha);
+ document.getElementById("login").style.display="none";
+ document.getElementById("app").style.display="block";
+ carregarEquip();
 }
 
 window.logout=()=>{signOut(auth);location.reload();}
 
 window.salvarEquipamento=async()=>{
-  const data={
-    patrimonio:document.getElementById("patrimonio").value,
-    nome:document.getElementById("nome").value,
-    quantidade:document.getElementById("quantidade").value,
-    loja:document.getElementById("loja").value,
-    status:document.getElementById("status").value
-  };
-
-  if(editandoId){
-    await updateDoc(doc(db,"equipamentos",editandoId),data);
-    log("Editou",data.patrimonio);
-    editandoId=null;
-  }else{
-    await addDoc(collection(db,"equipamentos"),data);
-    log("Criou",data.patrimonio);
-  }
-
-  limparCampos();
-  carregarEquip();
+ await addDoc(collection(db,"equipamentos"),{
+  patrimonio:patrimonio.value,
+  nome:nome.value,
+  quantidade:quantidade.value,
+  loja:loja.value,
+  status:status.value
+ });
+ limpar();
+ carregarEquip();
 }
 
-function limparCampos(){
-  document.getElementById("patrimonio").value="";
-  document.getElementById("nome").value="";
-  document.getElementById("quantidade").value=1;
-  document.getElementById("loja").value="";
-  document.getElementById("status").value="Ativo";
+function limpar(){
+ patrimonio.value="";
+ nome.value="";
+ quantidade.value=1;
+ loja.value="";
 }
 
 async function carregarEquip(){
-  const snap=await getDocs(collection(db,"equipamentos"));
-  let html="";
-  equipamentos=[];
+ const snap=await getDocs(collection(db,"equipamentos"));
+ equipamentos=[];
+ let html="";
 
-  snap.forEach(d=>{
-    const e=d.data();
-    e.id=d.id;
-    equipamentos.push(e);
+ snap.forEach(d=>{
+  const e=d.data();
+  equipamentos.push(e);
+ });
 
-    html+=`<tr>
-    <td>${e.patrimonio}</td>
-    <td>${e.nome}</td>
-    <td><span class="badge ${e.status}">${e.status}</span></td>
-    <td>
-    ${tipoUsuario!=="loja"?`<button title="Editar" onclick="editar('${e.id}')">✏️</button>`:""}
-    ${tipoUsuario==="admin"?`<button title="Excluir" onclick="excluir('${e.id}')">🗑️</button>`:""}
-    </td>
-    </tr>`;
-  });
-
-  document.getElementById("tabelaEquip").innerHTML=html;
-  graficoDash();
+ render(equipamentos);
+ graficoDash();
 }
 
-window.editar=id=>{
-  if(tipoUsuario==="loja")return alert("Sem permissão");
-  const e=equipamentos.find(x=>x.id===id);
-  document.getElementById("patrimonio").value=e.patrimonio;
-  document.getElementById("nome").value=e.nome;
-  document.getElementById("quantidade").value=e.quantidade;
-  document.getElementById("loja").value=e.loja;
-  document.getElementById("status").value=e.status;
-  editandoId=id;
+function render(lista){
+ let html="";
+ lista.forEach(e=>{
+  html+=`<tr>
+   <td>${e.patrimonio}</td>
+   <td>${e.nome}</td>
+   <td><span class="badge ${e.status}">${e.status}</span></td>
+   <td>
+     <button onclick="imprimir('${e.patrimonio}','${e.nome}')">🖨️</button>
+   </td>
+  </tr>`;
+ });
+ tabelaEquip.innerHTML=html;
 }
 
-window.excluir=async(id)=>{
-  if(tipoUsuario!=="admin")return alert("Sem permissão");
-  await deleteDoc(doc(db,"equipamentos",id));
-  log("Excluiu",id);
-  carregarEquip();
+window.buscar=()=>{
+ const termo=busca.value.toLowerCase();
+ const filtrado=equipamentos.filter(e=>
+  e.nome.toLowerCase().includes(termo) ||
+  e.patrimonio.toLowerCase().includes(termo)
+ );
+ render(filtrado);
 }
 
-window.criarUsuario=async()=>{
-  await addDoc(collection(db,"usuarios"),{
-    email:document.getElementById("novoEmail").value,
-    nome:document.getElementById("novoNome").value,
-    tipo:document.getElementById("novoTipo").value
-  });
-  carregarUsuarios();
-}
-
-async function carregarUsuarios(){
-  const snap=await getDocs(collection(db,"usuarios"));
-  let html="";
-  snap.forEach(d=>{
-    const u=d.data();
-    html+=`<tr><td>${u.email}</td><td>${u.tipo}</td></tr>`;
-  });
-  document.getElementById("tabelaUsuarios").innerHTML=html;
-}
-
-async function log(acao,det){
-  await addDoc(collection(db,"logs"),{
-    acao,
-    det,
-    usuario:auth.currentUser.email,
-    data:new Date().toLocaleString()
-  });
-}
-
-async function carregarLogs(){
-  const snap=await getDocs(collection(db,"logs"));
-  let html="";
-  snap.forEach(d=>{
-    const l=d.data();
-    html+=`<tr><td>${l.acao}</td><td>${l.usuario}</td><td>${l.data}</td></tr>`;
-  });
-  document.getElementById("tabelaLogs").innerHTML=html;
+window.imprimir=(pat,nome)=>{
+ const w=window.open('','PRINT');
+ w.document.write(`
+ <div style="font-family:monospace">
+ <h3>ROMTECH</h3>
+ <p>Patrimônio: ${pat}</p>
+ <p>Equipamento: ${nome}</p>
+ </div>
+ `);
+ w.print();
+ w.close();
 }
 
 function graficoDash(){
-  const cont={};
-  equipamentos.forEach(e=>{cont[e.status]=(cont[e.status]||0)+1});
+ const cont={};
+ equipamentos.forEach(e=>{cont[e.status]=(cont[e.status]||0)+1});
 
-  if(grafico)grafico.destroy();
-  grafico=new Chart(document.getElementById("grafico"),{
-    type:'bar',
-    data:{labels:Object.keys(cont),datasets:[{label:'Equipamentos',data:Object.values(cont)}]}
-  });
+ if(grafico)grafico.destroy();
+ grafico=new Chart(graficoCanvas(),{
+  type:'bar',
+  data:{labels:Object.keys(cont),datasets:[{data:Object.values(cont)}]}
+ });
+}
+
+function graficoCanvas(){
+ return document.getElementById("grafico");
 }
 </script>
 
 </body>
 </html>
+
+<!--
+🔥 REGRAS FIREBASE (COLE NO FIRESTORE):
+
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+
+  match /equipamentos/{id} {
+   allow read: if request.auth != null;
+   allow write: if request.auth != null;
+  }
+
+  match /usuarios/{id} {
+   allow read, write: if request.auth.token.email == "SEU_EMAIL_ADMIN";
+  }
+
+ }
+}
+-->
