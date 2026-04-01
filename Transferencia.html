@@ -142,7 +142,10 @@ window.login=async()=>{
     const snap=await getDocs(collection(db,"usuarios"));
     snap.forEach(d=>{if(d.data().email===email)tipoUsuario=d.data().tipo});
     iniciar();
-  }catch(e){alert("Erro login")}
+  }catch (e) {
+  console.error("ERRO REAL:", e.code);
+  alert(e.code);
+}
 }
 
 function iniciar(){
