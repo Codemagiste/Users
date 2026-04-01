@@ -36,373 +36,291 @@ body{
 }
 
 #loginBox{
-  background:#ffffff;
+  background:#fff;
   padding:40px;
   border-radius:16px;
   box-shadow:var(--sombra);
   text-align:center;
   width:320px;
+  animation:fadeIn .6s ease;
 }
 
-.logo{
-  width:220px;
-  margin-bottom:20px;
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
-#loginBox h2{
-  color:#0f172a;
-  margin-bottom:20px;
-}
-
-#loginBox input{
+input,select{
   width:100%;
-  padding:12px;
-  margin:8px 0;
-  border:none;
+  padding:10px;
+  margin:6px 0;
   border-radius:8px;
   border:1px solid #cbd5e1;
 }
 
-/* BOTÕES */
 button{
   background:linear-gradient(145deg,var(--azul),var(--azul-escuro));
   color:#fff;
   border:none;
-  padding:10px 16px;
+  padding:10px;
   border-radius:8px;
   cursor:pointer;
-  box-shadow:0 4px 0 #1e40af;
-  transition:.15s;
+  transition:.2s;
   font-weight:600;
 }
 
-button:hover{filter:brightness(1.05)}
-button:active{transform:translateY(3px);box-shadow:0 1px 0 #1e40af}
+button:hover{transform:scale(1.03)}
 
-/* HEADER */
 header{
   background:linear-gradient(90deg,#0f172a,#1e293b);
   color:#fff;
-  padding:16px 24px;
+  padding:16px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  box-shadow:var(--sombra);
 }
 
-header h1{font-size:20px;margin:0}
+.container{padding:20px;max-width:1200px;margin:auto}
 
-/* CONTAINER */
-.container{padding:24px;max-width:1200px;margin:auto}
-
-/* CARDS */
 .card{
   background:var(--card);
   border-radius:14px;
   padding:20px;
-  margin-bottom:22px;
+  margin-bottom:20px;
   box-shadow:var(--sombra);
+  animation:fadeIn .4s ease;
 }
 
-.card h3{margin-top:0}
+h3{margin-top:0}
 
-/* FORM */
-input,select{
-  padding:10px;
-  margin:6px 4px;
-  border:1px solid #cbd5e1;
-  border-radius:8px;
-}
-
-/* TABLE */
+/* TABELA */
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th{
-  background:#e2e8f0;
-  padding:10px;
-  text-align:left;
-}
-td{
-  padding:10px;
-  border-top:1px solid #e2e8f0;
+th{background:#e2e8f0;padding:10px}
+td{padding:10px;border-top:1px solid #e2e8f0}
+
+tr:hover{background:#f8fafc}
+
+.badge{
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  color:#fff;
 }
 
-/* FOOTER */
-footer{
-  text-align:center;
-  padding:20px;
-  color:#64748b;
-  font-size:14px;
-}
+.Ativo{background:#16a34a}
+.Estoque{background:#64748b}
+.Manutenção{background:#f59e0b}
+.Defeito{background:#dc2626}
 
 /* RESPONSIVO */
 @media(max-width:768px){
-  .container{padding:12px}
-  .card{padding:14px}
-  table,thead,tbody,tr,td,th{font-size:12px}
-  button{width:100%;margin-top:8px}
-
-  /* Tabelas responsivas */
-  .card > div{
-    overflow-x:auto;
-  }
-  table{
-    display:block;
-    white-space:nowrap;
-  }
+  table{display:block;overflow-x:auto;white-space:nowrap}
 }
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <div id="loginBox">
-    <img src="https://i.imgur.com/u7X1g64.jpeg" class="logo">
-    <h2>Sistema Inventário TI</h2>
-    <input id="usuario" placeholder="Usuário">
+    <h2>Inventário TI</h2>
+    <input id="usuario" placeholder="Email">
     <input id="senha" type="password" placeholder="Senha">
     <button onclick="login()">Entrar</button>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none">
-
 <header>
-  <h1>🖥️ Inventário TI</h1>
-  <button onclick="logout()">Sair</button>
+<h2>Inventário TI</h2>
+<button onclick="logout()">Sair</button>
 </header>
 
 <div class="container">
 
-<!-- CADASTRO EQUIPAMENTO -->
 <div class="card">
-<h3>📦 Cadastrar Equipamento</h3>
+<h3>Cadastro</h3>
 <input id="patrimonio" placeholder="Patrimônio">
 <input id="nome" placeholder="Equipamento">
 <input id="quantidade" type="number" value="1">
 <input id="loja" placeholder="Loja">
 <select id="status">
-  <option value="Ativo">Ativo</option>
-  <option value="Estoque">Estoque</option>
-  <option value="Manutenção">Manutenção</option>
-  <option value="Defeito">Defeito</option>
+<option>Ativo</option>
+<option>Estoque</option>
+<option>Manutenção</option>
+<option>Defeito</option>
 </select>
 <button onclick="salvarEquipamento()">Salvar</button>
 </div>
 
-<!-- EQUIPAMENTOS -->
 <div class="card">
-<h3>📋 Equipamentos</h3>
-<div>
+<h3>Equipamentos</h3>
 <table>
-<thead>
-<tr>
-<th>Patrimônio</th><th>Equipamento</th><th>Qtd</th><th>Loja</th><th>Status</th><th>Ações</th>
-</tr>
-</thead>
+<thead><tr><th>Patrimônio</th><th>Nome</th><th>Status</th><th>Ações</th></tr></thead>
 <tbody id="tabelaEquip"></tbody>
 </table>
 </div>
-</div>
 
-<!-- MOVIMENTAÇÕES -->
-<div class="card">
-<h3>🚚 Movimentações</h3>
-<div>
+<div class="card" id="usuariosBox" style="display:none">
+<h3>Usuários</h3>
+<input id="novoEmail" placeholder="Email">
+<input id="novoNome" placeholder="Nome">
+<select id="novoTipo">
+<option value="admin">Admin</option>
+<option value="supervisor">Supervisor</option>
+<option value="loja">Loja</option>
+</select>
+<button onclick="criarUsuario()">Criar</button>
 <table>
-<thead>
-<tr>
-<th>Tipo</th><th>Patrimônio</th><th>Origem</th><th>Destino</th><th>Status</th><th>Responsável</th><th>Data</th>
-</tr>
-</thead>
-<tbody id="tabelaMov"></tbody>
+<thead><tr><th>Email</th><th>Tipo</th></tr></thead>
+<tbody id="tabelaUsuarios"></tbody>
 </table>
 </div>
+
+<div class="card">
+<h3>Logs</h3>
+<table>
+<thead><tr><th>Ação</th><th>Usuário</th><th>Data</th></tr></thead>
+<tbody id="tabelaLogs"></tbody>
+</table>
 </div>
 
-<!-- DASHBOARD -->
 <div class="card">
-<h3>📊 Dashboard</h3>
+<h3>Dashboard</h3>
 <canvas id="grafico"></canvas>
 </div>
 
 </div>
-
-<footer>
-Desenvolvido por <strong style="color:#0f172a">RomTech</strong> • Uso exclusivo
-</footer>
-
 </div>
 
-<!-- FIREBASE / JS -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",
-  authDomain: "romtech-e1e15.firebaseapp.com",
-  projectId: "romtech-e1e15",
-  storageBucket: "romtech-e1e15.firebasestorage.app",
-  messagingSenderId: "153455301031",
-  appId: "1:153455301031:web:6933f2bc3f6e485c2f2682"
-};
+const firebaseConfig={apiKey:"AIzaSyB01HoecwsFtSMfrZtMjSK8Jmc9G7DP2EgJu8-ivBw",authDomain:"romtech-e1e15.firebaseapp.com",projectId:"romtech-e1e15"};
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const auth=getAuth(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let equipamentos = [];
-let movimentacoes = [];
+let tipoUsuario=null;
+let equipamentos=[];
 let grafico;
+let editandoId=null;
 
-const loginDiv = document.getElementById("login");
-const appDiv = document.getElementById("app");
+window.login=async()=>{
+  const email=usuario.value;
+  const senha=senha.value;
 
-// LOGIN SIMPLES
-window.login = function() {
-  const u = document.getElementById("usuario").value.trim();
-  const s = document.getElementById("senha").value.trim();
-  if (!u || !s) { alert("Informe usuário e senha"); return; }
-  loginDiv.style.display = "none";
-  appDiv.style.display = "block";
-  carregarEquipamentos();
-  carregarMov();
-};
-
-window.logout = function() { location.reload(); }
-
-// SALVAR EQUIPAMENTO
-window.salvarEquipamento = async function() {
-  const patrimonio = document.getElementById("patrimonio").value.trim();
-  const nome = document.getElementById("nome").value.trim();
-  const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-  const loja = document.getElementById("loja").value.trim();
-  const status = document.getElementById("status").value || "Ativo";
-  
-  if (!patrimonio || !nome || !loja) { alert("Preencha os campos"); return; }
-
-  await addDoc(collection(db, "equipamentos"), { patrimonio, nome, quantidade, loja, status });
-  alert("Salvo com sucesso!");
-  
-  // Limpar campos
-  document.getElementById("patrimonio").value = "";
-  document.getElementById("nome").value = "";
-  document.getElementById("quantidade").value = 1;
-  document.getElementById("loja").value = "";
-  document.getElementById("status").value = "Ativo";
-
-  carregarEquipamentos();
+  try{
+    const cred=await signInWithEmailAndPassword(auth,email,senha);
+    const snap=await getDocs(collection(db,"usuarios"));
+    snap.forEach(d=>{if(d.data().email===email)tipoUsuario=d.data().tipo});
+    iniciar();
+  }catch(e){alert("Erro login")}
 }
 
-// CARREGAR EQUIPAMENTOS
-async function carregarEquipamentos() {
-  const snap = await getDocs(collection(db, "equipamentos"));
-  equipamentos = [];
-  let html = "";
-  snap.forEach(docItem => {
-    const e = docItem.data();
-    e.id = docItem.id;
+function iniciar(){
+  login.style.display="none";
+  app.style.display="block";
+  if(tipoUsuario==="admin")usuariosBox.style.display="block";
+  carregarEquip();
+  carregarLogs();
+}
+
+window.logout=()=>{signOut(auth);location.reload();}
+
+window.salvarEquipamento=async()=>{
+  const data={patrimonio:patrimonio.value,nome:nome.value,quantidade:quantidade.value,loja:loja.value,status:status.value};
+
+  if(editandoId){
+    await updateDoc(doc(db,"equipamentos",editandoId),data);
+    log("Editou",data.patrimonio);
+    editandoId=null;
+  }else{
+    await addDoc(collection(db,"equipamentos"),data);
+    log("Criou",data.patrimonio);
+  }
+
+  carregarEquip();
+}
+
+async function carregarEquip(){
+  const snap=await getDocs(collection(db,"equipamentos"));
+  let html="";
+  equipamentos=[];
+
+  snap.forEach(d=>{
+    const e=d.data();
+    e.id=d.id;
     equipamentos.push(e);
-    html += `<tr>
-      <td>${e.patrimonio}</td>
-      <td>${e.nome}</td>
-      <td>${e.quantidade}</td>
-      <td>${e.loja}</td>
-      <td>${e.status}</td>
-      <td>
-        <button onclick="editarEquipamento('${e.id}')">✏️</button>
-        <button onclick="excluirEquipamento('${e.id}')">🗑️</button>
-      </td>
+
+    html+=`<tr>
+    <td>${e.patrimonio}</td>
+    <td>${e.nome}</td>
+    <td><span class="badge ${e.status}">${e.status}</span></td>
+    <td>
+    ${tipoUsuario!=="loja"?`<button title="Editar" onclick="editar('${e.id}')">✏️</button>`:""}
+    ${tipoUsuario==="admin"?`<button title="Excluir" onclick="excluir('${e.id}')">🗑️</button>`:""}
+    </td>
     </tr>`;
   });
-  document.getElementById("tabelaEquip").innerHTML = html;
+
+  tabelaEquip.innerHTML=html;
+  graficoDash();
 }
 
-// EDITAR EQUIPAMENTO
-window.editarEquipamento = async function(id) {
-  const e = equipamentos.find(eq => eq.id === id);
-  if (!e) return;
-  document.getElementById("patrimonio").value = e.patrimonio;
-  document.getElementById("nome").value = e.nome;
-  document.getElementById("quantidade").value = e.quantidade;
-  document.getElementById("loja").value = e.loja;
-  document.getElementById("status").value = e.status;
-
-  const salvarBtn = document.querySelector("button[onclick='salvarEquipamento()']");
-  salvarBtn.onclick = async () => {
-    const patrimonio = document.getElementById("patrimonio").value.trim();
-    const nome = document.getElementById("nome").value.trim();
-    const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-    const loja = document.getElementById("loja").value.trim();
-    const status = document.getElementById("status").value || "Ativo";
-    await updateDoc(doc(db, "equipamentos", id), { patrimonio, nome, quantidade, loja, status });
-    alert("Atualizado com sucesso!");
-    document.getElementById("patrimonio").value = "";
-    document.getElementById("nome").value = "";
-    document.getElementById("quantidade").value = 1;
-    document.getElementById("loja").value = "";
-    document.getElementById("status").value = "Ativo";
-    carregarEquipamentos();
-    salvarBtn.onclick = window.salvarEquipamento;
-  };
+window.editar=id=>{
+  if(tipoUsuario==="loja")return alert("Sem permissão");
+  const e=equipamentos.find(x=>x.id===id);
+  patrimonio.value=e.patrimonio;
+  nome.value=e.nome;
+  quantidade.value=e.quantidade;
+  loja.value=e.loja;
+  status.value=e.status;
+  editandoId=id;
 }
 
-// EXCLUIR EQUIPAMENTO
-window.excluirEquipamento = async function(id) {
-  if (!confirm("Deseja realmente excluir este equipamento?")) return;
-  await deleteDoc(doc(db, "equipamentos", id));
-  
-  // Excluir movimentações relacionadas
-  const snapMov = await getDocs(collection(db, "movimentacoes"));
-  snapMov.forEach(async mDoc => {
-    if (mDoc.data().patrimonio === equipamentos.find(e => e.id === id)?.patrimonio) {
-      await deleteDoc(doc(db, "movimentacoes", mDoc.id));
-    }
-  });
-
-  carregarEquipamentos();
-  carregarMov();
+window.excluir=async(id)=>{
+  if(tipoUsuario!=="admin")return alert("Sem permissão");
+  await deleteDoc(doc(db,"equipamentos",id));
+  log("Excluiu",id);
+  carregarEquip();
 }
 
-// CARREGAR MOVIMENTAÇÕES
-async function carregarMov() {
-  const snap = await getDocs(collection(db, "movimentacoes"));
-  movimentacoes = [];
-  let html = "";
-  snap.forEach(docItem => {
-    const m = docItem.data();
-    movimentacoes.push(m);
-    html += `<tr>
-      <td>${m.tipo}</td><td>${m.patrimonio}</td><td>${m.origem}</td>
-      <td>${m.destino}</td><td>${m.status}</td><td>${m.responsavel}</td><td>${m.data}</td>
-    </tr>`;
-  });
-  document.getElementById("tabelaMov").innerHTML = html;
-  graficoDashboard();
+window.criarUsuario=async()=>{
+  await addDoc(collection(db,"usuarios"),{email:novoEmail.value,nome:novoNome.value,tipo:novoTipo.value});
+  carregarUsuarios();
 }
 
-// GRÁFICO
-function graficoDashboard() {
-  const statusCount = { Ativo:0, Estoque:0, "Manutenção":0, Defeito:0 };
-  equipamentos.forEach(e => { statusCount[e.status] = (statusCount[e.status]||0)+1; });
+async function carregarUsuarios(){
+  const snap=await getDocs(collection(db,"usuarios"));
+  let html="";
+  snap.forEach(d=>{const u=d.data();html+=`<tr><td>${u.email}</td><td>${u.tipo}</td></tr>`});
+  tabelaUsuarios.innerHTML=html;
+}
 
-  if (grafico) grafico.destroy();
-  grafico = new Chart(document.getElementById("grafico"), {
-    type:"bar",
-    data:{
-      labels:Object.keys(statusCount),
-      datasets:[{label:"Equipamentos por status", data:Object.values(statusCount), backgroundColor:"#2563eb"}]
-    }
+async function log(acao,det){
+  await addDoc(collection(db,"logs"),{acao,det,usuario:auth.currentUser.email,data:new Date().toLocaleString()});
+}
+
+async function carregarLogs(){
+  const snap=await getDocs(collection(db,"logs"));
+  let html="";
+  snap.forEach(d=>{const l=d.data();html+=`<tr><td>${l.acao}</td><td>${l.usuario}</td><td>${l.data}</td></tr>`});
+  tabelaLogs.innerHTML=html;
+}
+
+function graficoDash(){
+  const cont={};
+  equipamentos.forEach(e=>{cont[e.status]=(cont[e.status]||0)+1});
+
+  if(grafico)grafico.destroy();
+  grafico=new Chart(document.getElementById("grafico"),{
+    type:'bar',
+    data:{labels:Object.keys(cont),datasets:[{label:'Equipamentos',data:Object.values(cont)}]}
   });
 }
 </script>
-  
-</style>
-<footer style="text-align: center; padding: 10px 0; position: fixed; bottom: 0; width: 100%; background-color: #fff;">
-  Desenvolvido por <strong style="color:#0f172a">RomTech</strong> • Uso exclusivo
-</footer>
-  
+
 </body>
 </html>
