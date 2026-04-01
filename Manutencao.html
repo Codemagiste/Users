@@ -62,6 +62,9 @@ td{padding:8px;border-bottom:1px solid #ddd;}
 <div class="card">
 <input id="busca" placeholder="Buscar...">
 <table>
+<thead>
+<tr><td>OS</td><td>Cliente</td><td>Equipamento</td><td>Status</td><td>Ações</td></tr>
+</thead>
 <tbody id="tabela"></tbody>
 </table>
 </div>
@@ -69,7 +72,7 @@ td{padding:8px;border-bottom:1px solid #ddd;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -95,23 +98,29 @@ function toast(msg){
  setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+// 🔥 GERADOR DE OS
+async function gerarOS(){
+ const ref = doc(db,"config","contadorOS");
+ return await runTransaction(db, async (transaction)=>{
+   const snap = await transaction.get(ref);
+   let seq = 1;
+   if(snap.exists()) seq = snap.data().sequencia + 1;
+   transaction.set(ref,{sequencia:seq});
+   return "OS-" + String(seq).padStart(5,'0');
+ });
+}
+
 onAuthStateChanged(auth, async user=>{
  if(user){
   loginDiv.style.display="none";
   mainDiv.style.display="block";
 
-  // 🔥 BUSCA CORRETA
   const q = query(usuarios, where("email","==", user.email));
   const snap = await getDocs(q);
 
-  if(!snap.empty){
-    usuarioAtual = snap.docs[0].data();
-  } else {
-    usuarioAtual = {email:user.email, perfil:"tecnico"};
-  }
+  usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico"};
 
   userInfo.textContent = user.email + " ("+usuarioAtual.perfil+")";
-
   carregar();
  } else {
   loginDiv.style.display="block";
@@ -119,52 +128,35 @@ onAuthStateChanged(auth, async user=>{
  }
 });
 
-window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value)
-.catch(e=>toast(e.message));
-
+window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value).catch(e=>toast(e.message));
 window.logout = ()=> signOut(auth);
 
 window.salvar = async ()=>{
- const statusElement = document.getElementById('status');
-
- let statusVal = "Em andamento";
- if(statusElement && statusElement.value) statusVal = statusElement.value;
-
- if(!cliente.value || !equipamento.value || !tecnico.value || !serie.value){
-  toast("Preencha todos os campos");
-  return;
+ if(!cliente.value||!equipamento.value||!tecnico.value||!serie.value){
+  toast("Preencha todos os campos");return;
  }
 
- const snap = await getDocs(ordens);
- for(const d of snap.docs){
-  if(d.data().serie === serie.value){
-    toast("Duplicado");
-    return;
-  }
- }
+ const numeroOS = await gerarOS();
 
  await addDoc(ordens,{
+  os: numeroOS,
   cliente:cliente.value,
   equipamento:equipamento.value,
   tecnico:tecnico.value,
   serie:serie.value,
-  status:statusVal,
+  status: document.getElementById('status').value || "Em andamento",
   data:new Date().toLocaleString(),
   historico:[]
  });
 
- toast("Salvo");
+ toast("OS criada: "+numeroOS);
  carregar();
 }
 
 async function carregar(){
  cache=[];
  const snap = await getDocs(ordens);
- snap.forEach(d=>{
-  const x=d.data();
-  x.id=d.id;
-  cache.push(x);
- });
+ snap.forEach(d=>{const x=d.data();x.id=d.id;cache.push(x)});
  render(cache);
 }
 
@@ -183,42 +175,27 @@ function prox(s){
 function render(lista){
  tabela.innerHTML="";
  lista.forEach(d=>{
-  tabela.innerHTML+=`
-  <tr>
+  tabela.innerHTML+=`<tr>
+   <td>${d.os||'-'}</td>
    <td>${d.cliente}</td>
    <td>${d.equipamento}</td>
-   <td>
-    <span class="badge ${cor(d.status)}" onclick="trocar('${d.id}','${d.status}')">
-    ${d.status}
-    </span>
-   </td>
+   <td><span class="badge ${cor(d.status)}" onclick="trocar('${d.id}','${d.status}')">${d.status}</span></td>
    <td>
     <button onclick="hist('${d.id}')">📜</button>
-    ${usuarioAtual.perfil==="admin" ? `<button onclick="del('${d.id}')">🗑</button>` : ""}
+    ${usuarioAtual.perfil==="admin"?`<button onclick="del('${d.id}')">🗑</button>`:""}
    </td>
   </tr>`;
  });
 }
 
-busca.oninput = ()=>{
- const t=busca.value.toLowerCase();
- render(cache.filter(d=>d.cliente.toLowerCase().includes(t) || d.equipamento.toLowerCase().includes(t)));
-}
-
 window.trocar = async (id,atual)=>{
  const novo = prox(atual);
-
  const ref = doc(db,"ordens",id);
  const snap = await getDoc(ref);
  const d = snap.data();
 
  const hist = d.historico || [];
- hist.push({
-  de:atual,
-  para:novo,
-  data:new Date().toLocaleString(),
-  user:usuarioAtual.email
- });
+ hist.push({de:atual,para:novo,data:new Date().toLocaleString(),user:usuarioAtual.email});
 
  await updateDoc(ref,{status:novo,historico:hist});
  carregar();
@@ -227,21 +204,13 @@ window.trocar = async (id,atual)=>{
 window.hist = async id=>{
  const snap = await getDoc(doc(db,"ordens",id));
  const h = snap.data().historico || [];
-
  let txt="Histórico:\n";
- h.forEach(x=>{
-  txt += `${x.data} - ${x.de} → ${x.para} (${x.user})\n`;
- });
-
+ h.forEach(x=> txt+=`${x.data} - ${x.de} → ${x.para} (${x.user})\n`);
  alert(txt);
 }
 
 window.del = async id=>{
- if(usuarioAtual.perfil !== "admin"){
-  toast("Sem permissão");
-  return;
- }
-
+ if(usuarioAtual.perfil!=="admin") return toast("Sem permissão");
  await deleteDoc(doc(db,"ordens",id));
  carregar();
 }
