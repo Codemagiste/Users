@@ -11,13 +11,17 @@ body{background:#0f172a;padding:20px;color:#111;}
 .header{background:#020617;color:#fff;padding:15px;border-radius:10px;display:flex;justify-content:space-between;}
 .card{background:#fff;padding:15px;border-radius:10px;margin-top:15px;}
 input,select{width:100%;padding:8px;margin:5px 0;border:1px solid #ccc;border-radius:6px;}
-button{padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;}
+button{padding:6px 10px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;}
 table{width:100%;margin-top:10px;border-collapse:collapse;}
 th,td{padding:8px;border-bottom:1px solid #ddd;}
 .toast{position:fixed;top:10px;right:10px;background:#111;color:#fff;padding:10px;border-radius:6px;opacity:0}
 .toast.show{opacity:1}
 .login-box{max-width:320px;margin:auto;margin-top:10%;background:#fff;padding:20px;border-radius:10px;text-align:center}
 .login-box img{width:100%;border-radius:8px;margin-bottom:10px}
+.badge{padding:4px 10px;border-radius:12px;color:#fff;font-size:12px;cursor:pointer}
+.andamento{background:#f59e0b}
+.finalizada{background:#2563eb}
+.entregue{background:#16a34a}
 </style>
 </head>
 <body>
@@ -38,23 +42,13 @@ th,td{padding:8px;border-bottom:1px solid #ddd;}
     <button onclick="logout()">Sair</button>
   </div>
 
-  <div class="card" id="userPanel" style="display:none;">
-    <h3>Gerenciar Usuários</h3>
-    <input id="novoEmail" placeholder="Email">
-    <select id="novoPerfil">
-      <option value="admin">Admin</option>
-      <option value="tecnico">Técnico</option>
-    </select>
-    <button onclick="criarUsuario()">Criar</button>
-    <table id="tabelaUsuarios"><tbody></tbody></table>
-  </div>
-
   <div class="card">
     <input id="cliente" placeholder="Cliente">
     <input id="equipamento" placeholder="Equipamento">
     <input id="tecnico" placeholder="Técnico">
     <input id="serie" placeholder="Série">
     <select id="status">
+      <option value="">Status</option>
       <option>Em andamento</option>
       <option>Finalizada</option>
       <option>Entregue</option>
@@ -87,66 +81,66 @@ const ordens=collection(db,"ordens");
 const usuarios=collection(db,"usuarios");
 
 let usuarioAtual=null;
+let cache=[];
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
 onAuthStateChanged(auth, async user=>{
   if(user){
-    loginDiv.style.display='none';
-    mainDiv.style.display='block';
+    loginDiv.style.display="none";
+    mainDiv.style.display="block";
+
+    usuarioAtual=null;
 
     const snap=await getDocs(usuarios);
-    snap.forEach(d=>{if(d.data().email===user.email) usuarioAtual=d.data();});
+    snap.forEach(d=>{
+      if(d.data().email===user.email){
+        usuarioAtual=d.data();
+      }
+    });
+
+    if(!usuarioAtual){
+      usuarioAtual={email:user.email,perfil:'tecnico'};
+    }
 
     userInfo.textContent=user.email+" ("+usuarioAtual.perfil+")";
 
-    if(usuarioAtual.perfil==='admin'){
-      userPanel.style.display='block';
-      carregarUsuarios();
-    }
-
     carregar();
+  }else{
+    loginDiv.style.display="block";
+    mainDiv.style.display="none";
   }
 });
 
 window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value).catch(e=>toast(e.message));
 window.logout=()=>signOut(auth);
 
-window.criarUsuario=async()=>{
-  await addDoc(usuarios,{email:novoEmail.value,perfil:novoPerfil.value});
-  toast('Usuário criado');
-  carregarUsuarios();
-}
-
-async function carregarUsuarios(){
-  tabelaUsuarios.innerHTML='';
-  const snap=await getDocs(usuarios);
-  snap.forEach(d=>{
-    const u=d.data();
-    tabelaUsuarios.innerHTML+=`<tr><td>${u.email}</td><td>${u.perfil}</td></tr>`;
-  });
-}
-
 window.salvar=async()=>{
-  if(!cliente.value||!equipamento.value||!serie.value){toast('Preencha tudo');return}
+  const statusVal=document.getElementById('status').value||'Em andamento';
+
+  if(!cliente.value||!equipamento.value||!tecnico.value||!serie.value){
+    toast('Preencha todos os campos');return;
+  }
 
   const snap=await getDocs(ordens);
-  for(const d of snap.docs){if(d.data().serie===serie.value){toast('Duplicado');return}}
+  for(const d of snap.docs){
+    if(d.data().serie===serie.value){toast('Equipamento já cadastrado');return}
+  }
 
   await addDoc(ordens,{
     cliente:cliente.value,
     equipamento:equipamento.value,
     tecnico:tecnico.value,
     serie:serie.value,
-    status:status.value,
-    data:new Date().toLocaleString()
+    status:statusVal,
+    data:new Date().toLocaleString(),
+    historico:[]
   });
 
-  toast('Salvo');
+  toast('OS salva');
   carregar();
 }
 
-let cache=[];
 async function carregar(){
   cache=[];
   const snap=await getDocs(ordens);
@@ -154,18 +148,30 @@ async function carregar(){
   render(cache);
 }
 
+function classe(status){
+  if(status==='Em andamento')return 'andamento';
+  if(status==='Finalizada')return 'finalizada';
+  if(status==='Entregue')return 'entregue';
+}
+
+function proximo(s){
+  if(s==='Em andamento')return 'Finalizada';
+  if(s==='Finalizada')return 'Entregue';
+  return 'Em andamento';
+}
+
 function render(lista){
   tabela.innerHTML='';
   lista.forEach(d=>{
     tabela.innerHTML+=`<tr>
-    <td>${d.cliente}</td>
-    <td>${d.equipamento}</td>
-    <td>${d.status}</td>
-    <td>
-    <button title="Editar" onclick="editar('${d.id}')">✏️</button>
-    ${usuarioAtual.perfil==='admin'?`<button title="Excluir" onclick="del('${d.id}')">🗑</button>`:''}
-    <button title="Imprimir" onclick="printOS('${d.id}')">🖨</button>
-    </td></tr>`;
+      <td>${d.cliente}</td>
+      <td>${d.equipamento}</td>
+      <td><span class="badge ${classe(d.status)}" onclick="trocar('${d.id}','${d.status}')">${d.status}</span></td>
+      <td>
+        <button onclick="hist('${d.id}')">📜</button>
+        ${usuarioAtual.perfil==='admin'?`<button onclick="del('${d.id}')">🗑</button>`:''}
+      </td>
+    </tr>`;
   });
 }
 
@@ -174,33 +180,31 @@ busca.oninput=()=>{
   render(cache.filter(d=>d.cliente.toLowerCase().includes(t)||d.equipamento.toLowerCase().includes(t)));
 }
 
-window.editar=async id=>{
-  const s=prompt('1 andamento 2 finalizada 3 entregue');
-  let st='';
-  if(s==='1')st='Em andamento';
-  if(s==='2')st='Finalizada';
-  if(s==='3')st='Entregue';
-  if(!st)return;
+window.trocar=async(id,atual)=>{
+  const novo=proximo(atual);
+  const ref=doc(db,'ordens',id);
+  const snap=await getDoc(ref);
+  const d=snap.data();
 
-  await updateDoc(doc(db,'ordens',id),{status:st});
-  toast('Atualizado');
+  const hist=d.historico||[];
+  hist.push({de:atual,para:novo,data:new Date().toLocaleString(),user:usuarioAtual.email});
+
+  await updateDoc(ref,{status:novo,historico:hist});
   carregar();
+}
+
+window.hist=async id=>{
+  const snap=await getDoc(doc(db,'ordens',id));
+  const h=snap.data().historico||[];
+  let txt='Histórico:\n';
+  h.forEach(x=>txt+=`${x.data} - ${x.de} → ${x.para} (${x.user})\n`);
+  alert(txt);
 }
 
 window.del=async id=>{
   if(usuarioAtual.perfil!=='admin'){toast('Sem permissão');return}
   await deleteDoc(doc(db,'ordens',id));
-  toast('Excluído');
   carregar();
-}
-
-window.printOS=async id=>{
-  const snap=await getDoc(doc(db,'ordens',id));
-  const d=snap.data();
-
-  const w=window.open('','','width=300,height=600');
-  w.document.write(`<div style="font-family:monospace;font-size:12px">OS<br>${d.cliente}<br>${d.equipamento}<br>${d.status}<br>________</div>`);
-  w.print();
 }
 
 </script>
