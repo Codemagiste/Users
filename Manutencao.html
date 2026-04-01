@@ -48,6 +48,7 @@ td{padding:8px;border-bottom:1px solid #ddd;}
 <input id="equipamento" placeholder="Equipamento">
 <input id="tecnico" placeholder="Técnico">
 <input id="serie" placeholder="Número de Série">
+<input id="defeito" placeholder="Descrição do defeito">
 
 <select id="status">
 <option value="">Status</option>
@@ -122,6 +123,13 @@ onAuthStateChanged(auth, async user=>{
   usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico",loja:"geral"};
 
   userInfo.textContent = user.email + " ("+usuarioAtual.perfil+")";
+
+  // 🔥 ATIVAR PAINEL ADMIN
+  if(usuarioAtual.perfil === 'admin'){
+    document.getElementById('adminPanel').style.display = 'block';
+  } else {
+    document.getElementById('adminPanel').style.display = 'none';
+  }
   carregar();
  } else {
   loginDiv.style.display="block";
@@ -150,6 +158,7 @@ window.salvar = async ()=>{
  const numeroOS = await gerarOS();
 
  await addDoc(ordens,{
+  defeito: defeito.value,
   loja: usuarioAtual.loja || 'geral',
   os: numeroOS,
   cliente:cliente.value,
@@ -231,6 +240,7 @@ window.imprimir = async id=>{
   OS: ${d.os}<br>
   Cliente: ${d.cliente}<br>
   Equip: ${d.equipamento}<br>
+  Defeito: ${d.defeito||'-'}<br>
   Status: ${d.status}<br>
   Técnico: ${d.tecnico}<br>
   <hr>
