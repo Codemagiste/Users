@@ -69,12 +69,23 @@ td{padding:8px;border-bottom:1px solid #ddd;}
 <tbody id="tabela"></tbody>
 </table>
 </div>
+
+<div id="adminPanel" class="card" style="display:none;">
+<h3>Painel Administrativo</h3>
+<input id="novoEmail" placeholder="Email">
+<input id="novaSenha" type="password" placeholder="Senha">
+<select id="novoPerfil">
+<option value="tecnico">Técnico</option>
+<option value="admin">Admin</option>
+</select>
+<button onclick="criarUsuario()">Criar Usuário</button>
+<pre id="logRelatorio"></pre>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
 const firebaseConfig = {
  apiKey:"AIzaSyAnZR2c7R7ANwHITxawvMgjLD08OrNfHxE",
@@ -87,7 +98,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const ordens = collection(db,"ordens");
-const logs = collection(db,"logs");
 const usuarios = collection(db,"usuarios");
 
 let usuarioAtual = null;
@@ -100,7 +110,6 @@ function toast(msg){
  setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// 🔥 GERADOR DE OS
 async function gerarOS(){
  const ref = doc(db,"config","contadorOS");
  return await runTransaction(db, async (transaction)=>{
@@ -120,16 +129,12 @@ onAuthStateChanged(auth, async user=>{
   const q = query(usuarios, where("email","==", user.email));
   const snap = await getDocs(q);
 
-  usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico",loja:"geral"};
+  usuarioAtual = !snap.empty ? snap.docs[0].data() : {email:user.email,perfil:"tecnico"};
 
-  userInfo.textContent = user.email + " ("+usuarioAtual.perfil+")";
+  userInfo.textContent = user.email + " (" + usuarioAtual.perfil + ")";
 
-  // 🔥 ATIVAR PAINEL ADMIN
-  if(usuarioAtual.perfil === 'admin'){
-    document.getElementById('adminPanel').style.display = 'block';
-  } else {
-    document.getElementById('adminPanel').style.display = 'none';
-  }
+  document.getElementById('adminPanel').style.display = usuarioAtual.perfil === 'admin' ? 'block' : 'none';
+
   carregar();
  } else {
   loginDiv.style.display="block";
@@ -137,17 +142,7 @@ onAuthStateChanged(auth, async user=>{
  }
 });
 
-// 🔔 LOG DE LOGIN
-async function logAcao(tipo,descricao){
- await addDoc(logs,{
-  tipo,
-  descricao,
-  user: auth.currentUser?.email || 'sistema',
-  data: new Date().toLocaleString()
- });
-}
-
-window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value).then(()=>logAcao('login','Usuário logou')).catch(e=>toast(e.message));
+window.login = ()=> signInWithEmailAndPassword(auth,email.value,senha.value).catch(e=>toast(e.message));
 window.logout = ()=> signOut(auth);
 
 window.salvar = async ()=>{
@@ -158,20 +153,18 @@ window.salvar = async ()=>{
  const numeroOS = await gerarOS();
 
  await addDoc(ordens,{
-  defeito: defeito.value,
-  loja: usuarioAtual.loja || 'geral',
   os: numeroOS,
   cliente:cliente.value,
   equipamento:equipamento.value,
   tecnico:tecnico.value,
   serie:serie.value,
+  defeito: defeito.value,
   status: document.getElementById('status').value || "Em andamento",
   data:new Date().toLocaleString(),
   historico:[]
  });
 
- toast("OS criada: "+numeroOS);
- await logAcao('criacao','Criou '+numeroOS);
+ toast("OS criada: " + numeroOS);
  carregar();
 }
 
@@ -197,18 +190,29 @@ function prox(s){
 function render(lista){
  tabela.innerHTML="";
  lista.forEach(d=>{
-  tabela.innerHTML+=`<tr>
-   <td>${d.os||'-'}</td>
+  tabela.innerHTML += `
+  <tr>
+   <td>${d.os || '-'}</td>
    <td>${d.cliente}</td>
    <td>${d.equipamento}</td>
-   <td><span class="badge ${cor(d.status)}" onclick="trocar('${d.id}','${d.status}')">${d.status}</span></td>
    <td>
-    <button title="Ver histórico" onclick="hist('${d.id}')">📜</button>
-        <button title="Imprimir OS" onclick="imprimir('${d.id}')">🧾</button>
-    ${usuarioAtual.perfil==="admin"?`<button title="Excluir OS" onclick="del('${d.id}')">🗑</button>`:""}
+     <span class="badge ${cor(d.status)}" onclick="trocar('${d.id}','${d.status}')">
+       ${d.status}
+     </span>
    </td>
-  </tr>`;
+   <td>
+     <button title="Ver histórico" onclick="hist('${d.id}')">📜</button>
+     <button title="Imprimir OS" onclick="imprimir('${d.id}')">🧾</button>
+     ${usuarioAtual && usuarioAtual.perfil === "admin" ? `<button title="Excluir OS" onclick="del('${d.id}')">🗑</button>` : ""}
+   </td>
+  </tr>
+  `;
  });
+}
+
+busca.oninput = ()=>{
+ const t=busca.value.toLowerCase();
+ render(cache.filter(d=>d.cliente.toLowerCase().includes(t) || d.equipamento.toLowerCase().includes(t)));
 }
 
 window.trocar = async (id,atual)=>{
@@ -224,7 +228,14 @@ window.trocar = async (id,atual)=>{
  carregar();
 }
 
-// 🧾 IMPRESSÃO TÉRMICA
+window.hist = async id=>{
+ const snap = await getDoc(doc(db,"ordens",id));
+ const h = snap.data().historico || [];
+ let txt="Histórico:\n";
+ h.forEach(x=> txt += `${x.data} - ${x.de} → ${x.para} (${x.user})\n`);
+ alert(txt);
+}
+
 window.imprimir = async id=>{
  const snap = await getDoc(doc(db,'ordens',id));
  const d = snap.data();
@@ -233,90 +244,34 @@ window.imprimir = async id=>{
  w.document.write(`
   <style>
     body{font-family:monospace;font-size:12px}
-    hr{border-top:1px dashed #000}
   </style>
   <h3>ORDEM DE SERVIÇO</h3>
-  <hr>
   OS: ${d.os}<br>
   Cliente: ${d.cliente}<br>
   Equip: ${d.equipamento}<br>
-  Defeito: ${d.defeito||'-'}<br>
+  Defeito: ${d.defeito || '-'}<br>
   Status: ${d.status}<br>
   Técnico: ${d.tecnico}<br>
-  <hr>
   ${d.data}
  `);
  w.print();
 }
 
-window.hist = async id=>{
- const snap = await getDoc(doc(db,"ordens",id));
- const h = snap.data().historico || [];
- let txt="Histórico:\n";
- h.forEach(x=> txt+=`${x.data} - ${x.de} → ${x.para} (${x.user})\n`);
- alert(txt);
-}
-
 window.del = async id=>{
- if(usuarioAtual.perfil!=="admin") return toast("Sem permissão");
+ if(usuarioAtual.perfil !== "admin") return toast("Sem permissão");
  await deleteDoc(doc(db,"ordens",id));
- await logAcao('exclusao','Excluiu OS '+id);
  carregar();
 }
 
-</script>
-
-<!-- 🔥 PAINEL ADMIN -->
-<div id="adminPanel" class="card" style="display:none;">
-<h3>Painel Administrativo</h3>
-
-<h4>Criar Usuário</h4>
-<input id="novoEmail" placeholder="Email">
-<input id="novaSenha" type="password" placeholder="Senha">
-<select id="novoPerfil">
-<option value="tecnico">Técnico</option>
-<option value="admin">Admin</option>
-</select>
-<button onclick="criarUsuario()">Criar Usuário</button>
-
-<h4>Relatório de Alterações</h4>
-<button onclick="relatorio()">Gerar Relatório</button>
-<pre id="logRelatorio" style="background:#111;color:#0f0;padding:10px;margin-top:10px;max-height:200px;overflow:auto"></pre>
-</div>
-
-<script type="module">
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-
-// Mostrar painel admin
-function mostrarAdmin(){
- if(usuarioAtual && usuarioAtual.perfil === 'admin'){
-  document.getElementById('adminPanel').style.display='block';
- }
-}
-
-// Atualiza após login
-const oldAuth = onAuthStateChanged;
-onAuthStateChanged(auth, async user=>{
- if(user){
-  setTimeout(mostrarAdmin,500);
- }
-});
-
-// Criar usuário
 window.criarUsuario = async ()=>{
  try{
   const email = document.getElementById('novoEmail').value;
   const senha = document.getElementById('novaSenha').value;
   const perfil = document.getElementById('novoPerfil').value;
 
-  if(!email || !senha) return toast('Preencha tudo');
-
   const cred = await createUserWithEmailAndPassword(auth,email,senha);
 
-  await addDoc(usuarios,{
-    email: email,
-    perfil: perfil
-  });
+  await addDoc(usuarios,{email: email, perfil: perfil});
 
   toast('Usuário criado');
   await signOut(auth);
@@ -324,33 +279,6 @@ window.criarUsuario = async ()=>{
  }catch(e){toast(e.message)}
 }
 
-// Relatório completo
-window.relatorio = async ()=>{
- const snap = await getDocs(ordens);
- let txt = "RELATÓRIO COMPLETO
-
-";
-
- snap.forEach(doc=>{
-  const d = doc.data();
-  txt += `OS: ${d.os}
-Cliente: ${d.cliente}
-Status: ${d.status}
-`;
-
-  (d.historico||[]).forEach(h=>{
-    txt += `  - ${h.data} | ${h.de} → ${h.para} | ${h.user}
-`;
-  });
-
-  txt += "---------------------
-";
- });
-
- document.getElementById('logRelatorio').textContent = txt;
-}
 </script>
-
 </body>
-</html>
 </html>
